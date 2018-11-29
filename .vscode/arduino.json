@@ -1,5 +1,7 @@
 {
     "board": "arduino:avr:uno",
     "port": "/dev/cu.usbmodem14201",
-    "sketch": "Centrale-moto/Centrale-moto.ino"
+    "sketch": "Centrale-moto/Centrale-moto.ino",
+    "output": "../build",
+    "debugger": "jlink"
 }

@@ -9,15 +9,14 @@ public:
     Clignotant(int p, int b);
     
     // the blinkers and its state (On/off)
-    const int pin;
+    int pin;
     int state = 0;
 
     // the  Command and clickbutton
-    const int buttonPin;
-    ClickButton button;
+    int buttonPin;
     
     // the state (Toggle)
-    byte isBlinking;
+    bool isBlinking;
 
     // Arbitrary blinker function 
     int blinkerLastClick = 0;

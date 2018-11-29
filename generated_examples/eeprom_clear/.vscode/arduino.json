@@ -1,0 +1,5 @@
+{
+    "sketch": "eeprom_clear.ino",
+    "port": "/dev/cu.usbmodem14201",
+    "board": "arduino:avr:uno"
+}

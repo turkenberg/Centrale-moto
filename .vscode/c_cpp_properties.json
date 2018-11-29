@@ -1,0 +1,30 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "/Applications/Arduino.app/Contents/Java/tools/**",
+                "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/**",
+                "${workspaceFolder}/libraries",
+                "${workspaceFolder}/libraries/ClickButton-master",
+                "${workspaceFolder}/libraries/Clignotant"
+            ],
+            "defines": [
+                "ARDUINO=100"
+            ],
+            "macFrameworkPath": [
+                "/System/Library/Frameworks",
+                "/Library/Frameworks"
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "clang-x64",
+            "C_Cpp.intelliSenseEngine": "Tag Parser",
+            "forcedInclude": [
+                "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/Arduino.h"
+            ]
+        }
+    ],
+    "version": 4
+}
