@@ -6,7 +6,6 @@
 	],
 	"settings": {
 		"arduino.path": "/Applications",
-		"arduino.commandPath": "run-arduino.bat",
 		"arduino.logLevel": "info",
 		"arduino.enableUSBDetection": true,
 		"arduino.disableTestingOpen": false,

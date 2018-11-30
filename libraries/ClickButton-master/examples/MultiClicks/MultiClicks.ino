@@ -84,5 +84,5 @@ void loop()
 
 
   // update the LED
-  digitalWrite(ledPin,ledState);
+  digitalWrite(ledPin, ledState);
 }
