@@ -6,23 +6,23 @@ String message;
 #pragma region DEFINITION COMMANDES
 //===== COMMANDES ======
 //---BRAKE-----
-const int b_BRAKE_pin = 13;
+const int b_BRAKE_pin = 2;
 byte b_BRAKE_read;
 
 //---HORN-----
-const int b_HORN_pin = 9;
+const int b_HORN_pin = 5;
 byte b_HORN_read;
 
 //---BEAM-----
-const int b_BEAM_pin = 10;
+const int b_BEAM_pin = 4;
 ClickButton b_BEAM_cB(b_BEAM_pin, LOW, CLICKBTN_PULLUP);
 
 //---LEFT-----
-const int b_LEFT_pin = 12;
+const int b_LEFT_pin = 7;
 ClickButton b_LEFT_cB(b_LEFT_pin, LOW, CLICKBTN_PULLUP);
 
 //---RIGHT-----
-const int b_RIGHT_pin = 11;
+const int b_RIGHT_pin = 6;
 ClickButton b_RIGHT_cB(b_RIGHT_pin, LOW, CLICKBTN_PULLUP);
 
 #pragma endregion
@@ -38,6 +38,7 @@ byte f_TURN_ONELONGCLICK;
 byte f_TURN_WARNINGS;
 byte f_TURN_LEFT;
 byte f_TURN_BLKNGON;
+byte f_v;
 unsigned long timeStartedBlinking;
 
 #pragma endregion
@@ -45,19 +46,19 @@ unsigned long timeStartedBlinking;
 #pragma region DEFINITION ACTUATORS
 //===== ACTUATORS ======
 //---BRAKE-----
-const int a_BRAKE_pin = 3;
+const int a_BRAKE_pin = 10;
 byte a_BRAKE_do;
 
 //---HORN-----
-const int a_HORN_pin = 2;
+const int a_HORN_pin = 13;
 byte a_HORN_do;
 
 //---BEAM-----
-const int a_BEAM_pin = 5;
+const int a_BEAM_pin = 9;
 int a_BEAM_do;                // 'int' coz' do is analog
 
 //---INSTR-----
-const int a_INSTR_pin = 4;
+const int a_INSTR_pin = 8;
 byte a_INSTR_do;
 
 //---TAIL-----
@@ -65,12 +66,14 @@ byte a_INSTR_do;
 // byte a_INSTR_do;
 
 //---LEFT-----
-const int a_LEFT_pin = 7;
+const int a_LEFT_pin = 12;
 byte a_LEFT_do;
+byte aff_LEFT_do;
 
 //---RIGHT-----
-const int a_RIGHT_pin = 8;
+const int a_RIGHT_pin = 11;
 byte a_RIGHT_do;
+byte aff_RIGHT_do;
 
 #pragma endregion
 
@@ -101,6 +104,9 @@ void loop(){
   UpdateBeam();
   UpdateTurn();
 
+  Serial.print(f_TURN_BLKNGON);
+
+
 /*
     List of buttons
     b_BEAM  --> f_BEAM      debounced
@@ -125,49 +131,82 @@ void loop(){
     a_HORN            HORN
     
 */
-
 }
+#pragma region SETUPS
+void setupTurn(){
+  // button(s) (pull_up)
+  b_LEFT_cB.debounceTime   = 20;   // Debounce timer in ms
+  b_LEFT_cB.multiclickTime = 180;  // Time limit for multi clicks
+  b_LEFT_cB.longClickTime  = 1000; // time until "held-down clicks" register
 
-#pragma region UPDATES
-void UpdateTurn(){
+  b_RIGHT_cB.debounceTime   = 20;   // Debounce timer in ms
+  b_RIGHT_cB.multiclickTime = 180;  // Time limit for multi clicks
+  b_RIGHT_cB.longClickTime  = 1000; // time until "held-down clicks" register
 
-  // Blink accordingly
-  if (f_TURN_BLKNGON){
-      if (f_TURN_LEFT){
-            a_LEFT_do = 1 - ((millis() - timeStartedBlinking)/500)%2;
-            a_RIGHT_do = 0;
-      } else
-      {
-            a_RIGHT_do = 1 - ((millis() - timeStartedBlinking)/500)%2;
-            a_LEFT_do = 0;
-      }
-  } else if (f_TURN_WARNINGS){
-        a_LEFT_do = 1 - ((millis() - timeStartedBlinking)/500)%2;
-        a_RIGHT_do = 1 - ((millis() - timeStartedBlinking)/500)%2;
-  } else {
-        a_LEFT_do = 0;
-        a_RIGHT_do = 0;
-  }
+  // Functions
+  f_TURN_WARNINGS=0;
+  f_TURN_LEFT=0;
+  f_TURN_BLKNGON=0;
+  timeStartedBlinking=0;
 
+  // actuator(s)
+  pinMode(a_LEFT_pin, OUTPUT);
+  a_LEFT_do = 0;
   digitalWrite(a_LEFT_pin, a_LEFT_do);
-  digitalWrite(a_RIGHT_pin, a_RIGHT_do);
-
+  aff_LEFT_do = 0;
+  //           -----
+  pinMode(a_RIGHT_pin, OUTPUT);
+  a_RIGHT_do = 0;
+  analogWrite(a_RIGHT_pin, a_RIGHT_do);
+  aff_RIGHT_do = 0;
 }
 
-void UpdateBeam(){
-  // write the do
-  analogWrite(a_BEAM_pin,a_BEAM_do);
-  digitalWrite(a_INSTR_pin, a_INSTR_do);
+void setupBeam(){
+  // button(s) (pull_up)
+  b_BEAM_cB.debounceTime   = 20;   // Debounce timer in ms
+  b_BEAM_cB.multiclickTime = 100;  // Time limit for multi clicks
+  b_BEAM_cB.longClickTime  = 1000; // time until "held-down clicks" register
+
+  // Functions
+  f_BEAM_ON = 1;
+  f_BEAM_HB = 0;
+
+  // actuator(s)
+  pinMode(a_BEAM_pin, OUTPUT);
+  a_BEAM_do = 0;
+  analogWrite(a_BEAM_pin, a_BEAM_do);
+  //           -----
+  pinMode(a_INSTR_pin, OUTPUT);
+  a_INSTR_do = 0;
+  analogWrite(a_INSTR_pin, a_INSTR_do);
 }
 
-void UpdateBrake(){
-  // write the do
+void setupBrake(){
+  // button(s) (pull_up)
+  pinMode(b_BRAKE_pin, INPUT);
+  b_BRAKE_read = HIGH;
+  digitalWrite(b_BRAKE_pin,b_BRAKE_read);
+  
+
+  // actuator(s)
+  pinMode(a_BRAKE_pin, OUTPUT);
+  a_BRAKE_do = LOW;
   digitalWrite(a_BRAKE_pin,a_BRAKE_do);
+  
 }
 
-void UpdateHorn(){
-  // write the do
-  digitalWrite(a_HORN_pin,a_HORN_do);
+void setupHorn(){
+  // button(s) (pull_up)
+  pinMode(b_HORN_pin, INPUT);
+  b_HORN_read = HIGH;
+  digitalWrite(b_HORN_pin, b_HORN_read);
+  
+
+  // actuator(s)
+  pinMode(a_HORN_pin, OUTPUT);
+  a_HORN_do = LOW;
+  digitalWrite(a_HORN_pin, a_HORN_do);
+  
 }
 #pragma endregion
 
@@ -180,77 +219,28 @@ void TurnFunction(){
   b_RIGHT_cB.Update();
   
   // LEFT : deduce command from inputs
-  if (b_LEFT_cB.clicks = 1) {
-      if (f_TURN_BLKNGON)
-      {
-            if (!f_TURN_LEFT)
-            {     f_TURN_LEFT = 1;
-                  f_TURN_BLKNGON = 1;
-                  f_TURN_WARNINGS = 0;
-                  f_TURN_ONELONGCLICK = 0;
-                  timeStartedBlinking = millis();
-            } else
-            {
-                  f_TURN_LEFT = 0;
-                  f_TURN_BLKNGON = 0;
-                  f_TURN_WARNINGS = 0;
-                  f_TURN_ONELONGCLICK = 0;
-                  timeStartedBlinking = millis();
-            }
-            
-      } else
-      {
-            f_TURN_BLKNGON = 1;
-            f_TURN_LEFT = 1;
-            f_TURN_WARNINGS = 0;
-            f_TURN_ONELONGCLICK = 0;
-            timeStartedBlinking = millis();
-      }
-      
+  if (b_LEFT_cB.clicks == 1) {
+      TurnHandler(1);
   }
 
   // RIGHT : deduce command from inputs
-  if (b_RIGHT_cB.clicks = 1) {
-      if (f_TURN_BLKNGON)
-      {
-            if (f_TURN_LEFT)
-            {
-                  f_TURN_LEFT = 0;
-                  f_TURN_BLKNGON = 1;
-                  f_TURN_WARNINGS = 0;
-                  f_TURN_ONELONGCLICK = 0;
-                  timeStartedBlinking = millis();
-            } else
-            {
-                  f_TURN_LEFT = 1;
-                  f_TURN_BLKNGON = 0;
-                  f_TURN_WARNINGS = 0;
-                  f_TURN_ONELONGCLICK = 0;
-                  timeStartedBlinking = millis();
-            }
-            
-      } else
-      {
-            f_TURN_BLKNGON = 1;
-            f_TURN_LEFT = 0;
-            f_TURN_WARNINGS = 0;
-            f_TURN_ONELONGCLICK = 0;
-            timeStartedBlinking = millis();
-      }
-      
+  else if (b_RIGHT_cB.clicks == 1) {
+      TurnHandler(0);
   }
-  else if (b_RIGHT_cB.clicks = -1) //long click
-  {
-        if (f_TURN_ONELONGCLICK){   // Already loaded up
+
+  // BOTH : any did a long click
+  if (b_RIGHT_cB.clicks == -1 || b_LEFT_cB.clicks == -1){
+      if (f_TURN_ONELONGCLICK){ // Toggle Warnings!
             f_TURN_WARNINGS = !f_TURN_WARNINGS;
             f_TURN_ONELONGCLICK = 0;
             f_TURN_BLKNGON = 0;
-            timeStartedBlinking = millis();
-        }
-        else {
-            f_TURN_ONELONGCLICK = 1;  //Loading up
-        }
+      } 
+      else {
+            f_TURN_ONELONGCLICK = 1;
+      }
   }
+      
+
 
   // Now we have all commands, find what to do
   if (f_TURN_BLKNGON){
@@ -272,7 +262,6 @@ void TurnFunction(){
   a_LEFT_do=0;
   a_RIGHT_do=0;
   }
-
 }
 
 void BeamFunction(){
@@ -282,8 +271,6 @@ void BeamFunction(){
   
   // toggle state on click
   if (b_BEAM_cB.clicks == 1) f_BEAM_HB = !f_BEAM_HB;
-
-  Serial.println(f_BEAM_HB);
 
   // toggle on/off long click
   if (b_BEAM_cB.clicks == -1) f_BEAM_ON = !f_BEAM_ON;
@@ -335,78 +322,103 @@ void HornFunction(){
 }
 #pragma endregion
 
-#pragma region SETUPS
-void setupTurn(){
-  // button(s) (pull_up)
-  b_LEFT_cB.debounceTime   = 20;   // Debounce timer in ms
-  b_LEFT_cB.multiclickTime = 180;  // Time limit for multi clicks
-  b_LEFT_cB.longClickTime  = 1000; // time until "held-down clicks" register
+#pragma region UPDATES
 
-  b_RIGHT_cB.debounceTime   = 20;   // Debounce timer in ms
-  b_RIGHT_cB.multiclickTime = 180;  // Time limit for multi clicks
-  b_RIGHT_cB.longClickTime  = 1000; // time until "held-down clicks" register
+void UpdateTurn(){
 
-  // Functions
-  f_TURN_WARNINGS=0;
-  f_TURN_LEFT=0;
-  f_TURN_BLKNGON=0;
-  timeStartedBlinking=0;
+  // Update blink clock
+  f_v = 1 - ((millis()- timeStartedBlinking)/500)%2; // - timeStartedBlinking)
 
-  // actuator(s)
-  pinMode(a_LEFT_pin, OUTPUT);
-  a_LEFT_do = 0;
-  digitalWrite(a_LEFT_pin, a_LEFT_do);
-  //           -----
-  pinMode(a_RIGHT_pin, OUTPUT);
-  a_RIGHT_do = 0;
-  analogWrite(a_RIGHT_pin, a_RIGHT_do);
+  // Blink accordingly
+  if (a_LEFT_do == a_RIGHT_do) {
+        if (!a_LEFT_do){ // equals and LOW
+              aff_LEFT_do = 0;
+              aff_RIGHT_do = 0;
+        } else { // equals ans HIGH
+              aff_LEFT_do = f_v;
+              aff_RIGHT_do = f_v;
+        }
+  } else if (a_LEFT_do) { // Different L HIGH R LOW
+        aff_LEFT_do = f_v;
+        aff_RIGHT_do = 0;
+  } else { //diff. %
+        aff_LEFT_do = 0;
+        aff_RIGHT_do = f_v;
+  }
+
+  digitalWrite(a_LEFT_pin, aff_LEFT_do);
+  digitalWrite(a_RIGHT_pin, aff_RIGHT_do);
+
 }
 
-void setupBeam(){
-  // button(s) (pull_up)
-  b_BEAM_cB.debounceTime   = 20;   // Debounce timer in ms
-  b_BEAM_cB.multiclickTime = 100;  // Time limit for multi clicks
-  b_BEAM_cB.longClickTime  = 1000; // time until "held-down clicks" register
-
-  // Functions
-  f_BEAM_ON = 1;
-  f_BEAM_HB = 0;
-
-  // actuator(s)
-  pinMode(a_BEAM_pin, OUTPUT);
-  a_BEAM_do = 0;
-  analogWrite(a_BEAM_pin, a_BEAM_do);
-  //           -----
-  pinMode(a_INSTR_pin, OUTPUT);
-  a_INSTR_do = 0;
-  analogWrite(a_INSTR_pin, a_INSTR_do);
+void UpdateBeam(){
+  // write the do
+  analogWrite(a_BEAM_pin,a_BEAM_do);
+  digitalWrite(a_INSTR_pin, a_INSTR_do);
 }
 
-void setupBrake(){
-  // button(s) (pull_up)
-  pinMode(b_BRAKE_pin, INPUT);
-  b_BRAKE_read = HIGH;
-  digitalWrite(b_BRAKE_pin,b_BRAKE_read);
-  
-
-  // actuator(s)
-  pinMode(a_BRAKE_pin, OUTPUT);
-  a_BRAKE_do = LOW;
+void UpdateBrake(){
+  // write the do
   digitalWrite(a_BRAKE_pin,a_BRAKE_do);
-  
 }
 
-void setupHorn(){
-  // button(s) (pull_up)
-  pinMode(b_HORN_pin, INPUT);
-  b_HORN_read = HIGH;
-  digitalWrite(b_HORN_pin, b_HORN_read);
-  
+void UpdateHorn(){
+  // write the do
+  digitalWrite(a_HORN_pin,a_HORN_do);
+}
+#pragma endregion
 
-  // actuator(s)
-  pinMode(a_HORN_pin, OUTPUT);
-  a_HORN_do = LOW;
-  digitalWrite(a_HORN_pin, a_HORN_do);
-  
+#pragma region HELPERS
+
+void TurnHandler(byte _leftButton){
+  if (_leftButton){
+       // we are blinking - command is left
+      if (f_TURN_BLKNGON)
+      {
+            // it was blinking left, toggle off
+            if (f_TURN_LEFT)
+            {     
+                  f_TURN_BLKNGON = 0;
+            }
+            else // it was blinking right, shut down
+            {
+                  f_TURN_LEFT = 1;
+                  timeStartedBlinking = millis(); // new blink cycle
+            }
+            
+      }
+      else // We were not blinking, toggle new blink cycle
+      {
+            f_TURN_WARNINGS = 0; // in case we were warning
+            f_TURN_BLKNGON = 1;
+            f_TURN_LEFT = 1;
+            timeStartedBlinking = millis(); // new blink cycle
+      }
+  }
+  else
+  {
+       // we are blinking - command is right
+      if (f_TURN_BLKNGON)
+      {
+            // it was blinking left, switch side
+            if (f_TURN_LEFT)
+            {     
+                  f_TURN_LEFT = 0;
+                  timeStartedBlinking = millis(); // new blink cycle
+            }
+            else // it was blinking right, shut down
+            {
+                  f_TURN_BLKNGON = 0;
+            }
+            
+      }
+      else // We were not blinking, toggle new blink cycle
+      {
+            f_TURN_WARNINGS = 0; // in case we were warning
+            f_TURN_BLKNGON = 1;
+            f_TURN_LEFT = 0;
+            timeStartedBlinking = millis(); // new blink cycle
+      }
+  }
 }
 #pragma endregion
