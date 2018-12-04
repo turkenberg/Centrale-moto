@@ -1,7 +1,5 @@
 #include <ClickButton.h>
 
-String message;
-
 
 #pragma region DEFINITION COMMANDES
 //===== COMMANDES ======
