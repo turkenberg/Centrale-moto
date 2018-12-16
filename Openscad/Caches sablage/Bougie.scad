@@ -9,6 +9,6 @@ difference(){
 
 
 rotate([180, 0, 0]) {
-    cylinder(d1=12.2, d2=11.4, h=8, center=false, $fn=200);
+    cylinder(d1=12, d2=9, h=20, center=false, $fn=200);
 }
 

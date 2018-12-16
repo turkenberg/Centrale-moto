@@ -1,12 +1,12 @@
 //$fn=100
 
-color("cyan")
+color("cyan",0.75)
     translate([1.5, 0, 0]) {
         cylinder(h=2,d=28.5, $fn=200);
     }
     
 
-color("grey")
+color("grey",0.75)
 difference(){
     hull() {
         
