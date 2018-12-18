@@ -1,7 +1,10 @@
 #include <ClickButton.h>
 
+// Either COMMODOS or CLICKBUTTONS
+#define MODE COMMODOS
 
-#pragma region DEFINITION COMMANDES
+#if MODE == CLICKBUTTONS
+#pragma region DEFINITION COMMANDES CLICK BUTTONS
 //===== COMMANDES ======
 //---BRAKE-----
 const int b_BRAKE_pin = 2;
@@ -24,6 +27,17 @@ const int b_RIGHT_pin = 6;
 ClickButton b_RIGHT_cB(b_RIGHT_pin, LOW, CLICKBTN_PULLUP);
 
 #pragma endregion
+#elif MODE == COMMODOS
+#pragma region DEFINTION COMMANDES COMMODOS
+// MAybe nodifier que dans la définition des clickbuttons (+setup)
+// Et faire le traitement différent dans la function
+// OU possibilité d'utiliser des clickbuttons sur COMMODOS
+// En utilisant la variable 'depressed' du clickbutton ?
+#pragma endregion 
+#endif
+
+
+
 
 #pragma region DEFINITION FUNCTIONS
 //===== FONCTIONS ======
@@ -38,7 +52,6 @@ byte f_TURN_LEFT;
 byte f_TURN_BLKNGON;
 byte f_v;
 unsigned long timeStartedBlinking;
-
 #pragma endregion
 
 #pragma region DEFINITION ACTUATORS
@@ -80,12 +93,17 @@ byte aff_RIGHT_do;
 
 void setup(){
 
-  Serial.begin(9600);
-  
-  setupBrake();
-  setupHorn();
-  setupBeam();
-  setupTurn();
+  //Serial.begin(9600);
+
+  #if MODE == CLICKBUTTONS
+  setupBrakeClickButtons();
+  setupHornClickButtons();
+  setupBeamClickButtons();
+  setupTurnClickButtons();
+  #elif MODE == COMMODOS
+
+
+  #endif
 }
 
 
@@ -101,8 +119,6 @@ void loop(){
   UpdateHorn();
   UpdateBeam();
   UpdateTurn();
-
-  Serial.print(f_TURN_BLKNGON);
 
 
 /*
@@ -131,7 +147,7 @@ void loop(){
 */
 }
 #pragma region SETUPS
-void setupTurn(){
+void setupTurnClickButtons(){
   // button(s) (pull_up)
   b_LEFT_cB.debounceTime   = 20;   // Debounce timer in ms
   b_LEFT_cB.multiclickTime = 180;  // Time limit for multi clicks
@@ -159,7 +175,7 @@ void setupTurn(){
   aff_RIGHT_do = 0;
 }
 
-void setupBeam(){
+void setupBeamClickButtons(){
   // button(s) (pull_up)
   b_BEAM_cB.debounceTime   = 20;   // Debounce timer in ms
   b_BEAM_cB.multiclickTime = 100;  // Time limit for multi clicks
@@ -179,7 +195,7 @@ void setupBeam(){
   analogWrite(a_INSTR_pin, a_INSTR_do);
 }
 
-void setupBrake(){
+void setupBrakeClickButtons(){
   // button(s) (pull_up)
   pinMode(b_BRAKE_pin, INPUT);
   b_BRAKE_read = HIGH;
@@ -193,7 +209,7 @@ void setupBrake(){
   
 }
 
-void setupHorn(){
+void setupHornClickButtons(){
   // button(s) (pull_up)
   pinMode(b_HORN_pin, INPUT);
   b_HORN_read = HIGH;
