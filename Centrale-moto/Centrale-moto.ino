@@ -36,9 +36,6 @@ ClickButton b_RIGHT_cB(b_RIGHT_pin, LOW, CLICKBTN_PULLUP);
 #pragma endregion 
 #endif
 
-
-
-
 #pragma region DEFINITION FUNCTIONS
 //===== FONCTIONS ======
 //---BEAM---
