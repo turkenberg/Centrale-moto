@@ -1,47 +1,99 @@
 #include <ClickButton.h>
+#include <NeoPixelBus.h>
+#include <NeoPixelAnimator.h>
+
 
 // Either COMMODOS or CLICKBUTTONS
-#define MODE COMMODOS
+//#define MODE COMMODOS
 
-#if MODE == CLICKBUTTONS
-#pragma region DEFINITION COMMANDES CLICK BUTTONS
-//===== COMMANDES ======
-//---BRAKE-----
-const int b_BRAKE_pin = 2;
-byte b_BRAKE_read;
+// Either NEOPIXELS or BULBS
+#define TURNSIGNAL NEOPIXELS
 
+
+#pragma region HORN
+// ++++++++++++++COMMANDES++++++++++
 //---HORN-----
-const int b_HORN_pin = 5;
+const uint16_t b_HORN_pin = 5;
 byte b_HORN_read;
 
-//---BEAM-----
-const int b_BEAM_pin = 4;
-ClickButton b_BEAM_cB(b_BEAM_pin, LOW, CLICKBTN_PULLUP);
+// ++++++++++++++FONCTIONS++++++++++
+// -none-
 
-//---LEFT-----
-const int b_LEFT_pin = 7;
-ClickButton b_LEFT_cB(b_LEFT_pin, LOW, CLICKBTN_PULLUP);
+// ++++++++++++++ACTUATORS++++++++++
+//---HORN-----
+const uint16_t a_HORN_pin = 13;
+byte a_HORN_do;
+#pragma endregion
 
-//---RIGHT-----
-const int b_RIGHT_pin = 6;
-ClickButton b_RIGHT_cB(b_RIGHT_pin, LOW, CLICKBTN_PULLUP);
+
+
+#pragma region INSTRUMENTLIGHT
+// ++++++++++++++COMMANDES++++++++++
+// -none-
+
+// ++++++++++++++FONCTIONS++++++++++
+// -none-
+
+// ++++++++++++++ACTUATORS++++++++++
+//---INSTR-----
+const uint16_t a_INSTR_pin = 8;
+byte a_INSTR_do;
 
 #pragma endregion
-#elif MODE == COMMODOS
-#pragma region DEFINTION COMMANDES COMMODOS
-// MAybe nodifier que dans la définition des clickbuttons (+setup)
-// Et faire le traitement différent dans la function
-// OU possibilité d'utiliser des clickbuttons sur COMMODOS
-// En utilisant la variable 'depressed' du clickbutton ?
-#pragma endregion 
-#endif
 
-#pragma region DEFINITION FUNCTIONS
-//===== FONCTIONS ======
+
+
+#pragma region FRONTBEAM
+// ++++++++++++++COMMANDES++++++++++
+//---BEAM-----
+const uint16_t b_BEAM_pin = 4;
+ClickButton b_BEAM_cB(b_BEAM_pin, LOW, CLICKBTN_PULLUP);
+
+// ++++++++++++++FONCTIONS++++++++++
 //---BEAM---
 byte f_BEAM_ON;
 byte f_BEAM_HB;
 
+// ++++++++++++++ACTUATORS++++++++++
+//---BEAM-----
+const uint16_t a_BEAM_pin = 9;
+int a_BEAM_do;                // 'int' coz' do is analog
+#pragma endregion
+
+
+
+#pragma region TAILLIGHT
+// ++++++++++++++COMMANDES++++++++++
+//---TAIL-----
+// const uint16_t a_INSTR_pin = 6;
+// byte a_INSTR_do;
+//---BRAKE-----
+const uint16_t b_BRAKE_pin = 2;
+byte b_BRAKE_read;
+
+// ++++++++++++++FONCTIONS++++++++++
+// -none-
+
+// ++++++++++++++ACTUATORS++++++++++
+//---BRAKE-----
+const uint16_t a_BRAKE_pin = 10;
+byte a_BRAKE_do;
+
+#pragma endregion
+
+
+
+#pragma region TURNSIGNAL
+// ++++++++++++++COMMANDES++++++++++
+//---LEFT-----
+const uint16_t b_LEFT_pin = 7;
+ClickButton b_LEFT_cB(b_LEFT_pin, LOW, CLICKBTN_PULLUP);
+
+//---RIGHT-----
+const uint16_t b_RIGHT_pin = 6;
+ClickButton b_RIGHT_cB(b_RIGHT_pin, LOW, CLICKBTN_PULLUP);
+
+// ++++++++++++++FONCTIONS++++++++++
 //---TURN---
 byte f_TURN_ONELONGCLICK;
 byte f_TURN_WARNINGS;
@@ -49,39 +101,41 @@ byte f_TURN_LEFT;
 byte f_TURN_BLKNGON;
 byte f_v;
 unsigned long timeStartedBlinking;
-#pragma endregion
 
-#pragma region DEFINITION ACTUATORS
-//===== ACTUATORS ======
-//---BRAKE-----
-const int a_BRAKE_pin = 10;
-byte a_BRAKE_do;
-
-//---HORN-----
-const int a_HORN_pin = 13;
-byte a_HORN_do;
-
-//---BEAM-----
-const int a_BEAM_pin = 9;
-int a_BEAM_do;                // 'int' coz' do is analog
-
-//---INSTR-----
-const int a_INSTR_pin = 8;
-byte a_INSTR_do;
-
-//---TAIL-----
-// const int a_INSTR_pin = 6;
-// byte a_INSTR_do;
-
+// ++++++++++++++ACTUATORS++++++++++
+#if TURNSIGNAL == BULBS
 //---LEFT-----
-const int a_LEFT_pin = 12;
+const uint16_t a_LEFT_pin = 12;
 byte a_LEFT_do;
 byte aff_LEFT_do;
 
 //---RIGHT-----
-const int a_RIGHT_pin = 11;
+const uint16_t a_RIGHT_pin = 11;
 byte a_RIGHT_do;
 byte aff_RIGHT_do;
+
+#elif TURNSIGNAL == NEOPIXELS
+
+const uint16_t PixelCount = 36; // common number of pixels (real is 12 but 36 allows for cooler animation)
+const uint16_t AnimCount = 1; //Three anims, but ONE channel, for now! There will pbly be a second one on the tail light
+const uint16_t TailLength = 12; // length of the tail, must be shorter than PixelCount
+const float MaxLightness = 0.4f; // max lightness at the head of the tail (0.5f is full bright)
+
+const uint16_t a_LEFTFRONT_pin = 2;  // data pin for neopixel
+const uint16_t a_RIGHTFRONT_pin = 3;  // data pin for neopixel
+//const uint16_t a_LEFTREAR_pin = 11;  // data pin for neopixel
+//const uint16_t a_RIGHTREAR_pin = 12;  // data pin for neopixel
+
+//NeoGamma<NeoGammaTableMethod> colorGamma; // for any fade animations, best to correct gamma
+
+NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> stripLeftFront(PixelCount, a_LEFTFRONT_pin);   // new strip
+NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> stripRightFront(PixelCount, a_RIGHTFRONT_pin); // new strip
+//NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> stripLeftRear(PixelCount, a_LEFTREAR_pin);   // new strip
+//NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> stripRightRear(PixelCount, a_RIGHTREAR_pin); // new strip
+
+NeoPixelAnimator animations(AnimCount); // NeoPixel animation management object
+
+#endif
 
 #pragma endregion
 
@@ -92,18 +146,16 @@ void setup(){
 
   //Serial.begin(9600);
 
-  #if MODE == CLICKBUTTONS
+  //#if MODE == CLICKBUTTONS
   setupBrakeClickButtons();
   setupHornClickButtons();
   setupBeamClickButtons();
   setupTurnClickButtons();
-  #elif MODE == COMMODOS
+  //#elif MODE == COMMODOS
 
 
-  #endif
+  //#endif
 }
-
-
 
 void loop(){
 
@@ -117,31 +169,6 @@ void loop(){
   UpdateBeam();
   UpdateTurn();
 
-
-/*
-    List of buttons
-    b_BEAM  --> f_BEAM      debounced
-    b_HORN  --> f_HORN      direct
-    b_LEFT  --> f_BLINKERS  debounced
-    b_RIGHT --> f_BLINKERS  debounced
-    b_BRAKE --> f_BRAKE     direct
-    
-    List of functions:
-    f_BEAM : LB ; HB ; OFF -- loop around
-    f_HORN : ON ; OFF      -- on/off
-    f_BLINKERS : R ; L ; WARNINGS ; OFF
-    f_BRAKE : ON ; OFF     -- on/off
-
-    List of actuators:
-    a_INSTR           BEAM
-    a_HBEAM           BEAM
-    a_LBEAM           BEAM
-    a_BLINKER_LEFT    BLINKERS
-    a_BLINKER_RIGHT   BLINKERS
-    a_BRAKE           BRAKE
-    a_HORN            HORN
-    
-*/
 }
 #pragma region SETUPS
 void setupTurnClickButtons(){
@@ -160,6 +187,7 @@ void setupTurnClickButtons(){
   f_TURN_BLKNGON=0;
   timeStartedBlinking=0;
 
+  #if TURNSIGNAL == BULBS
   // actuator(s)
   pinMode(a_LEFT_pin, OUTPUT);
   a_LEFT_do = 0;
@@ -170,6 +198,21 @@ void setupTurnClickButtons(){
   a_RIGHT_do = 0;
   analogWrite(a_RIGHT_pin, a_RIGHT_do);
   aff_RIGHT_do = 0;
+
+  #elif TURNSIGNAL == NEOPIXELS
+  stripLeftFront.Begin();
+  stripRightFront.Begin();
+  //stripLeftRear.Begin();
+  //stripRightRear.Begin();
+
+  stripLeftFront.Show();
+  stripRightFront.Show();
+  //stripLeftRear.Show();
+  //stripRightRear.Show();
+
+  a_LEFT_do = 0;
+  a_RIGHT_do = 0;
+  #endif
 }
 
 void setupBeamClickButtons(){
@@ -220,6 +263,8 @@ void setupHornClickButtons(){
   
 }
 #pragma endregion
+
+
 
 #pragma region FUNCTIONS
 
@@ -333,10 +378,13 @@ void HornFunction(){
 }
 #pragma endregion
 
+
+
 #pragma region UPDATES
 
 void UpdateTurn(){
 
+#if TURNSIGNAL == BULBS
   // Update blink clock
   f_v = 1 - ((millis()- timeStartedBlinking)/500)%2; // - timeStartedBlinking)
 
@@ -357,10 +405,34 @@ void UpdateTurn(){
         aff_RIGHT_do = f_v;
   }
 
+
   digitalWrite(a_LEFT_pin, aff_LEFT_do);
   digitalWrite(a_RIGHT_pin, aff_RIGHT_do);
 
+#elif TURNSIGNAL == NEOPIXELS
+  if (a_LEFT_do == a_RIGHT_do) {
+        if (!a_LEFT_do){ // equals and LOW
+            animations.StartAnimation(0, 30, OffAnimUpdate);
+        } else { // equals ans HIGH
+            //anim warning
+        }
+  } else if (a_LEFT_do) { // Different L HIGH R LOW
+        //anim left
+  } else { //diff. %
+        //anim right
+  }
+
+  animations.UpdateAnimations();
+
+  stripLeftFront.Show();
+  stripRightFront.Show();
+  //StripShallUpdate(stripLeftRear);
+  //StripShallUpdate(stripRightRear);
+
+#endif
 }
+
+
 
 void UpdateBeam(){
   // write the do
@@ -378,6 +450,8 @@ void UpdateHorn(){
   digitalWrite(a_HORN_pin,a_HORN_do);
 }
 #pragma endregion
+
+
 
 #pragma region HELPERS
 
@@ -432,4 +506,75 @@ void TurnHandler(byte _leftButton){
       }
   }
 }
+
+void LeftAnimUpdate(const AnimationParam param)
+{
+    if (param.state == AnimationState_Started)
+    {
+      //DrawTailPixels(stripRightFront);
+    }
+    // wait for this animation to complete,
+    // we are using it as a timer of sorts
+    else if (param.state == AnimationState_Completed)
+    {
+        // done, time to restart this position tracking animation/timer
+        animations.RestartAnimation(param.index);
+
+        // rotate the complete strip one pixel to the right on every update
+        stripLeftFront.RotateLeft(1);
+        //stripLeftRear.RotateRight(1)  
+    }
+}
+
+void RightAnimUpdate(const AnimationParam param)
+{
+    if (param.state == AnimationState_Started)
+    {
+      DrawTailPixels(stripRightFront);
+    }
+    // wait for this animation to complete,
+    // we are using it as a timer of sorts
+    else if (param.state == AnimationState_Completed)
+    {
+        // done, time to restart this position tracking animation/timer
+        animations.RestartAnimation(param.index);
+
+        // rotate the complete strip one pixel to the right on every update
+        stripRightFront.RotateRight(1);
+        //stripRightRear.RotateLeft(1);
+    }
+}
+
+void WarningAnimUpdate(const AnimationParam param)
+{
+    if (param.state == AnimationState_Started)
+    {
+      RgbColor color = RgbColor(255, 40, 0);
+
+      for (uint16_t index = 0; index < stripRightFront.PixelCount() && index <= TailLength; index++)
+      {
+          stripRightFront.SetPixelColor(index, color);
+      }
+    }
+    // wait for this animation to complete,
+    // we are using it as a timer of sorts
+    else if (param.state == AnimationState_Completed)
+    {
+        // done, time to restart this position tracking animation/timer
+        animations.RestartAnimation(param.index);
+
+        // rotate the complete strip one pixel to the right on every update
+        stripRightFront.RotateRight(1);
+        stripLeftFront.RotateLeft(1);
+        //stripRightRear.RotateRight(1);
+        //stripLeftRear.RotateRight(1);
+    }
+}
+
+void OffAnimUpdate(const AnimationParam param)
+{
+  stripLeftFront.Clear();
+  stripRightFront.Clear();
+}
+
 #pragma endregion

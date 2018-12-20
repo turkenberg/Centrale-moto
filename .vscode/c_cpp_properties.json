@@ -3,15 +3,17 @@
         {
             "name": "Mac",
             "includePath": [
-                "/Users/Antoine/Documents/Arduino/libraries/Adafruit_NeoPixel-master",
                 "/Applications/Arduino.app/Contents/Java/tools/**",
                 "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/**",
                 "${workspace}/libraries",
-                "/Users/Antoine/Documents/GitHub/Centrale-moto/libraries/ClickButton-master/ClickButton.h"
+                "${workspaceFolder}/libraries/ClickButton-master",
+                "${workspaceFolder}/libraries/NeoPixelBus-master",
+                "${workspaceFolder}/libraries/NeoPixelBus-master/src",
+                "${workspaceFolder}/libraries/NeoPixelBus-master/src/internal"
             ],
             "forcedInclude": [
                 "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/Arduino.h",
-                "/Users/Antoine/Documents/GitHub/Centrale-moto/libraries/**"
+                "${workspaceFolder}/libraries/**"
             ],
             "macFrameworkPath": [
                 "/System/Library/Frameworks",
