@@ -4,10 +4,7 @@
 
 
 // Either COMMODOS or CLICKBUTTONS
-//#define MODE COMMODOS
-
-// Either NEOPIXELS or BULBS
-#define NEOPIXELS 1
+#define COMMODOS 0
 
 // Adresses of animations indexes (also serves as calling index within DrawTailPixels method)
 #define FRONTLEFT 0
@@ -17,6 +14,64 @@
 #define TAIL 4
 
 char buf [64];
+
+// =================== MAPPING ===================
+//                   ____________                
+//                   \          /                
+//                  a_HIBEAM_pin ()             
+//                  a_LOBEAM_pin ()             
+//        np_FL_pin ()   \__/   np_FR_pin ()    
+//            \/________[_][_]________\/        
+//                  a_INSTR_pin()               
+//                        !!                    
+//    b_LEFT_pin (14)-----------b_RIGHT_pin (17) 
+//      b_BEAM_pin (15) !----! b_HORN_pin (16)   
+//                        !!                    
+//                        !!                    
+//       a_HORN_pin()    oooo                   
+//                      o°°°°o                  
+//                      o°°°°o   b_BRAKE (6)    
+//                       o°°o                   
+//        np_RL_pin ()    oo      np_RL_pin ()  
+//            /\__________!!__________/\        
+//                        !!                    
+//                       [OO]                   
+//                  np_TAIL_pin()               
+//                                              
+
+
+//  A0   A1   A2   A3   A4   A5
+//  14   15   16   17   18   19
+//  in------------------------>
+//                              
+//                              
+//  n/a  n/a  out-------------------------------------------------------->
+//   0    1    2    3    4    5    6    7    8    9    10    11    12    13
+//                             
+
+
+#define BUTTON_LEFT 14
+#define BUTTON_BEAM 15
+#define BUTTON_HORN 16
+#define BUTTON_RIGHT 17
+#define CONTACT_BRAKE 18
+
+ClickButton b_LEFT_cB(BUTTON_LEFT, LOW, CLICKBTN_PULLUP);
+ClickButton b_BEAM_cB(BUTTON_BEAM, LOW, CLICKBTN_PULLUP);
+ClickButton b_HORN_cB(BUTTON_HORN, LOW, CLICKBTN_PULLUP);
+ClickButton b_RIGHT_cB(BUTTON_RIGHT, LOW, CLICKBTN_PULLUP);
+
+void setup(){
+
+}
+
+void loop(){
+
+}
+
+
+
+
 
 
 #pragma region HORN

@@ -8,9 +8,11 @@
 #include <NeoPixelBus.h>
 #include <NeoPixelAnimator.h>
 
-const uint16_t PixelCount = 16; // make sure to set this to the number of pixels in your strip
-const uint8_t PixelPin = 2;  // make sure to set this to the correct pin, ignored for Esp8266
+const uint16_t PixelCount = 12; // make sure to set this to the number of pixels in your strip
+const uint8_t PixelPin = 12;  // make sure to set this to the correct pin, ignored for Esp8266
 const uint8_t AnimationChannels = 1; // we only need one as all the pixels are animated at once
+
+char buf [64];
 
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
 // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.  
@@ -71,6 +73,10 @@ void BlendAnimUpdate(const AnimationParam& param)
     {
         strip.SetPixelColor(pixel, updatedColor);
     }
+
+    //sprintf (buf, "Animation progress is %d \r\n", (param.progress);
+    Serial.println(param.progress);
+
 }
 
 void FadeInFadeOutRinseRepeat(float luminance)
@@ -82,22 +88,22 @@ void FadeInFadeOutRinseRepeat(float luminance)
         // with the same saturation and luminance so the colors picked
         // will have similiar overall brightness
         RgbColor target = HslColor(random(360) / 360.0f, 1.0f, luminance);
-        uint16_t time = random(800, 2000);
+        //uint16_t time = random(800, 2000);
 
         animationState[0].StartingColor = strip.GetPixelColor(0);
         animationState[0].EndingColor = target;
 
-        animations.StartAnimation(0, time, BlendAnimUpdate);
+        animations.StartAnimation(0, 10000, BlendAnimUpdate);
     }
     else 
     {
         // fade to black
-        uint16_t time = random(600, 700);
+        //uint16_t time = random(600, 700);
 
         animationState[0].StartingColor = strip.GetPixelColor(0);
         animationState[0].EndingColor = RgbColor(0);
 
-        animations.StartAnimation(0, time, BlendAnimUpdate);
+        animations.StartAnimation(0, 10000, BlendAnimUpdate);
     }
 
     // toggle to the next effect state
@@ -108,6 +114,8 @@ void setup()
 {
     strip.Begin();
     strip.Show();
+
+    Serial.begin(115200);
 
     SetRandomSeed();
 }

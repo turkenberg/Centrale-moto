@@ -16,7 +16,8 @@
 		],
 		"arduino.defaultBaudRate": 115200,
 		"files.associations": {
-			"atomic": "cpp"
+			"atomic": "cpp",
+			"cstddef": "cpp"
 		}
 	}
 }
