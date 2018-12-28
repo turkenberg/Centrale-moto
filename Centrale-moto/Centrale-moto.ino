@@ -558,7 +558,6 @@ void FrontLeftAnimUpdate(const AnimationParam param)
 
 void ShowAllStrips(){
     stripLeftFront.Show();}
-    
 void BeginAllStrips(){
   stripLeftFront.Begin();}
 

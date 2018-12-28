@@ -80,7 +80,7 @@ const uint16_t TailStripTilt = 0; // Offset index to apply to tail strip in case
 
 // Turn signals parameters
 const float MaxLightness = 0.4f; // max lightness at the head of the tail (0.5f is full bright)
-RgbColor color;  //  = RgbColor(255,30,0) --- TODO ----
+RgbColor TurnSignalsColor;  //  = RgbColor(255,30,0) --- TODO ----
 
 
 // Buttons & inputs
@@ -110,14 +110,15 @@ void setup(){
     stripRightFront.Begin();
     stripRightRear.Begin();
     stripTail.Begin();
-    //      -
+    //
     stripLeftFront.Show();
     stripLeftRear.Show();
     stripRightFront.Show();
     stripRightRear.Show();
     stripTail.Show();
-    //      -
-    color = RgbColor(124,16,0);
+    
+    // turn signals color
+    TurnSignalsColor = RgbColor(124,16,0);
 
     // Setup Clickbuttons
     b_LEFT_cB.debounceTime   = 20;   // Debounce timer in ms
@@ -151,6 +152,21 @@ void loop(){
     //          animations of both left strips is started
     //          animations of both right strips is stopped
 
+    if (b_LEFT_cB.clicks == 1){ // Left button pressed once
+        // if warnings --> stop right, keep left
+        // if none --> start left
+        // if right --> stop right, start left
+        // if left§ --> stop left
+        
+        
+        // if animation is playing, stop it
+        if (animations.IsAnimationActive(anim_FRONTLEFT)){
+            animations.StopAnimation(anim_FRONTLEFT);
+        } else {
+            animations.StartAnimation(anim_FRONTLEFT,);
+        }
+        // if animation is not playing, start it
+    }
 
 
     animations.UpdateAnimations();
