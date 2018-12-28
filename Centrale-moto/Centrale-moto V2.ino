@@ -153,10 +153,11 @@ void loop(){
     //          animations of both right strips is stopped
 
     if (b_LEFT_cB.clicks == 1){ // Left button pressed once
-        // if warnings --> stop right, keep left
-        // if none --> start left
-        // if right --> stop right, start left
-        // if left§ --> stop left
+        // Check current states of turn signals: (is it "stopped", "L", "R", "W")
+            // if L --> stop
+            // else --> play L
+
+    
         
         
         // if animation is playing, stop it
