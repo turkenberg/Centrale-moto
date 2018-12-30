@@ -77,6 +77,7 @@ const uint16_t TailStripTilt = 0; // Offset index to apply to tail strip in case
 const float MaxLightness = 0.4f; // max lightness at the head of the tail (0.5f is full bright)
 const float TurningAnimationTime = 1000; // duration of animation to loop (in ms)
 uint16_t TurningAnimationCurrentlyRunning = 0; // 0=off ; 1=left ; 2=right ; 3=warnings
+byte f_WARNINGS_READY = 0;
 RgbColor TurnSignalsColor(70,7	,0);  //  = RgbColor(255,30,0) --- TODO ----
 
 
@@ -151,16 +152,29 @@ void loop(){
     }
 
     if (b_RIGHT_cB.clicks == 1){ // Right button pressed once
-        Serial.println("RIGHT!");
-        Serial.println(TurningAnimationCurrentlyRunning);
         if (TurningAnimationCurrentlyRunning != 2) {
             animations.StartAnimation(anim_TURNSIGNALS, TurningAnimationTime, TurningRightAnimation);
-            Serial.println("Starting RHS anim!");
         } else {
             animations.StartAnimation(anim_TURNSIGNALS, TurningAnimationTime, NotTurningAnimation);
-            Serial.println("Ending RHS anim!");
         }
     }
+
+    // Warnings handler
+    if (b_RIGHT_cB.clicks == -1 || b_LEFT_cB.clicks == -1){
+      if (f_WARNINGS_READY){ // Toggle Warnings ON/OFF depending on running or not!
+            // reset armed indicator
+            f_WARNINGS_READY = 0;
+            // toggle on/off
+            if (TurningAnimationCurrentlyRunning != 3){
+                animations.StartAnimation(anim_TURNSIGNALS, TurningAnimationTime, WarningAnimation);
+            } else {
+                animations.StartAnimation(anim_TURNSIGNALS, TurningAnimationTime, NotTurningAnimation);
+            }
+        } 
+      else { // Arm warning indicators
+            f_WARNINGS_READY = 1;
+      }
+  }
 
     animations.UpdateAnimations();
     ShowAllStrips();
@@ -294,6 +308,56 @@ void TurningRightAnimation(const AnimationParam& _param){
             {
                 stripRightFront.SetPixelColor(11-i, TurnSignalsColor);
                 stripRightRear.SetPixelColor(i, TurnSignalsColor);
+            }
+
+        }
+    }
+}
+
+void WarningAnimation(const AnimationParam& _param){
+
+    TurningAnimationCurrentlyRunning = 3; // This is the WARNING anim 
+
+    int ScaledProgress = static_cast<int>(_param.progress * 36) % 12; // looping 12-based index (as three-fold animation)
+
+    if (_param.state == AnimationState_Started){           // animation started ; draw all
+
+        // Lighting on everyone
+        stripRightFront.ClearTo(TurnSignalsColor);
+        stripRightRear.ClearTo(TurnSignalsColor);
+        stripLeftFront.ClearTo(TurnSignalsColor);
+        stripLeftRear.ClearTo(TurnSignalsColor);         
+
+    } else if (_param.state == AnimationState_Completed) { // animation finished ; restart
+
+        animations.RestartAnimation(_param.index);
+
+    } else {    // animation progression
+
+        if (_param.progress < 0.333333f) { // scaledprogress is between 0 (excluded) and 12 (excluded too)
+            for(int i = 0; i <= ScaledProgress; i++)
+            {
+                stripRightFront.SetPixelColor(11-i, RgbColor(0,0,0));
+                stripRightRear.SetPixelColor(i, RgbColor(0,0,0));
+                stripLeftFront.SetPixelColor(i, RgbColor(0,0,0));
+                stripLeftRear.SetPixelColor(11-i, RgbColor(0,0,0));
+            }
+            
+        } else if (_param.progress < 0.666666f) {
+
+            stripRightFront.ClearTo(RgbColor(0,0,0));
+            stripRightRear.ClearTo(RgbColor(0,0,0));
+            stripLeftFront.ClearTo(RgbColor(0,0,0));
+            stripLeftRear.ClearTo(RgbColor(0,0,0));
+
+        } else if (_param.progress < 0.999999f) {
+
+            for(int i = 0; i <= ScaledProgress; i++)
+            {
+                stripRightFront.SetPixelColor(11-i, TurnSignalsColor);
+                stripRightRear.SetPixelColor(i, TurnSignalsColor);
+                stripLeftFront.SetPixelColor(i, TurnSignalsColor);
+                stripLeftRear.SetPixelColor(11-i, TurnSignalsColor);
             }
 
         }
