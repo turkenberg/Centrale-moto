@@ -7,13 +7,12 @@
 #define COMMODOS 0
 
 // Indexes of animations players
-#define anim_FRONTLEFT 0    // Neopixel animation
-#define anim_FRONTRIGHT 1   // Neopixel animation
-#define anim_REARLEFT 2     // Neopixel animation
-#define anim_REARRIGHT 3    // Neopixel animation
-#define anim_TAIL 4         // ON / OFF
-#define anim_FRONTBEAM 5    // Three states: LOW / HIGH / OFF
-#define anim_HORN 6         // ON / OFF
+
+// Blinkers
+#define anim_TURNSIGNALS 0
+#define anim_FRONTBEAM 2         // ON / OFF
+#define anim_TAIL 5              // Three states: LOW / HIGH / OFF
+#define anim_HORN 6              // ON / OFF
 
 char buf [64];
 
@@ -156,6 +155,7 @@ void loop(){
         // Check current states of turn signals: (is it "stopped", "L", "R", "W")
             // if L --> stop
             // else --> play L
+            if (animations.)
 
     
         

@@ -138,8 +138,6 @@ public:
     {
         _timeScale = (timeScale < 1) ? (1) : (timeScale > 32768) ? 32768 : timeScale;
     }
-
-private:
     struct AnimationContext
     {
         AnimationContext() :
@@ -178,4 +176,5 @@ private:
     uint16_t _activeAnimations;
     uint16_t _timeScale;
     bool _isRunning;
+private:
 };
