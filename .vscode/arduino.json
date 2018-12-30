@@ -1,5 +1,5 @@
 {
     "board": "arduino:avr:uno",
-    "sketch": "Centrale-moto/Centrale-moto V2.ino",
-    "port": "/dev/cu.Bluetooth-Incoming-Port"
+    "sketch": "Centrale-moto/Centrale-moto.ino",
+    "port": "/dev/cu.usbmodem1411"
 }

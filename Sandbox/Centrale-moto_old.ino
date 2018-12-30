@@ -4,200 +4,85 @@
 
 
 // Either COMMODOS or CLICKBUTTONS
-#define COMMODOS 0
+//#define MODE COMMODOS
 
-// Indexes of animations players
+// Either NEOPIXELS or BULBS
+#define NEOPIXELS 1
 
-// Blinkers
-#define anim_TURNSIGNALS 0
-#define anim_FRONTBEAM 2         // ON / OFF
-#define anim_TAIL 5              // Three states: LOW / HIGH / OFF
-#define anim_HORN 6              // ON / OFF
+// Adresses of animations indexes (also serves as calling index within DrawTailPixels method)
+#define FRONTLEFT 0
+#define FRONTRIGHT 1
+#define REARLEFT 2
+#define REARRIGHT 3
+#define TAIL 4
 
 char buf [64];
 
-// =================== MAPPING ===================
-//                   ____________                
-//                   \          /                
-//                  a_HIBEAM_pin (7)             
-//                  a_LOBEAM_pin (6)             
-//       np_FL_pin (2)   \__/   np_FR_pin (3)    
-//            \/________[_][_]________\/        
-//                  a_INSTR_pin(9)               
-//                        !!                    
-//    b_LEFT_pin (14)-----------b_RIGHT_pin (17) 
-//      b_BEAM_pin (15) !----! b_HORN_pin (16)   
-//                        !!                    
-//                        !!                    
-//       a_HORN_pin(8)   oooo                   
-//                      o°°°°o                  
-//                      o°°°°o   b_BRAKE (18)    
-//                       o°°o                   
-//       np_RL_pin (4)    oo      np_RL_pin (5)  
-//            /\__________!!__________/\        
-//                        !!                    
-//                       [OO]                   
-//                  np_TAIL_pin(10)               
-//                                              
 
+#pragma region HORN
+// ++++++++++++++COMMANDES++++++++++
+//---HORN-----
+const uint16_t b_HORN_pin = 4;
+byte b_HORN_read;
 
+// ++++++++++++++FONCTIONS++++++++++
+// -none-
 
-//  A0   A1   A2   A3   A4   A5
-//  14   15   16   17   18   19
-//  in------------------------>
-//                              
-//                              
-//  n/a  n/a  OUT-------------------------------------------------------->
-//   0    1    2    3    4    5    6    7    8    9    10    11    12    13
-//                             
+// ++++++++++++++ACTUATORS++++++++++
+//---HORN-----
+const uint16_t a_HORN_pin = 13;
+byte a_HORN_do;
+#pragma endregion
 
+#pragma region INSTRUMENTLIGHT
+// ++++++++++++++COMMANDES++++++++++
+// -none-
 
-#define BUTTON_LEFT 14    // Clickbutton
-#define BUTTON_BEAM 15    // clickbutton
-#define BUTTON_HORN 16    // clickbutton
-#define BUTTON_RIGHT 17   // Clickbutton
-#define CONTACT_BRAKE 18  // Contact
+// ++++++++++++++FONCTIONS++++++++++
+// -none-
 
-#define a_FRONTLEFT 2   // Neopixel
-#define a_FRONTRIGHT 3  // Neopixel
-#define a_REARLEFT 4    // Neopixel
-#define a_REARRIGHT 5   // Neopixel
-#define a_LOWBEAM 6     // SS-Relay
-#define a_HIGHBEAM 7    // SS-Relay
-#define a_HORN 8        // SS-Relay
-#define a_INSTRLIGHTS 9 // SS-Relay
-#define a_TAIL 10       // Neopixel
+// ++++++++++++++ACTUATORS++++++++++
+//---INSTR-----
+const uint16_t a_INSTR_pin = 8;
+byte a_INSTR_do;
 
-// Animator parameters
-const uint16_t AnimCount = 7; //max 7 anims runnin at the same time (7 equipments)
-NeoPixelAnimator animations(AnimCount); // NeoPixel animation management object
+#pragma endregion
 
-// Neopixel parameters
-const uint16_t TurnSignalPixelCount = 12; // common number of pixels for turn signals
-const uint16_t TailPixelCount = 12; // common number of pixels for turn signals
-const uint16_t TailStripTilt = 0; // Offset index to apply to tail strip in case level animation is done
+#pragma region FRONTBEAM
+// ++++++++++++++COMMANDES++++++++++
+//---BEAM-----
+const uint16_t b_BEAM_pin = 3;
+ClickButton b_BEAM_cB(b_BEAM_pin, LOW, CLICKBTN_PULLUP);
 
-// Turn signals parameters
-const float MaxLightness = 0.4f; // max lightness at the head of the tail (0.5f is full bright)
-RgbColor TurnSignalsColor;  //  = RgbColor(255,30,0) --- TODO ----
+// ++++++++++++++FONCTIONS++++++++++
+//---BEAM---
+byte f_BEAM_ON;
+byte f_BEAM_HB;
 
+// ++++++++++++++ACTUATORS++++++++++
+//---BEAM-----
+const uint16_t a_BEAM_pin = 9;
+int a_BEAM_do;                // 'int' coz' do is analog
+#pragma endregion
 
-// Buttons & inputs
-ClickButton b_LEFT_cB(BUTTON_LEFT, LOW, CLICKBTN_PULLUP);
-ClickButton b_BEAM_cB(BUTTON_BEAM, LOW, CLICKBTN_PULLUP);
-ClickButton b_HORN_cB(BUTTON_HORN, LOW, CLICKBTN_PULLUP);
-ClickButton b_RIGHT_cB(BUTTON_RIGHT, LOW, CLICKBTN_PULLUP);
+#pragma region TAILLIGHT
+// ++++++++++++++COMMANDES++++++++++
+//---TAIL-----
+// const uint16_t a_INSTR_pin = 6;
+// byte a_INSTR_do;
+//---BRAKE-----
+const uint16_t b_BRAKE_pin = 3;
+byte b_BRAKE_read;
 
-// Actuators and outputs (constructors)
-NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> stripLeftFront(TurnSignalPixelCount, a_FRONTLEFT);
-NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> stripLeftRear(TurnSignalPixelCount, a_REARLEFT);
-NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> stripRightFront(TurnSignalPixelCount, a_FRONTRIGHT);
-NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> stripRightRear(TurnSignalPixelCount, a_REARRIGHT);
-NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> stripTail(TailPixelCount, a_TAIL);
+// ++++++++++++++FONCTIONS++++++++++
+// -none-
 
-void setup(){
+// ++++++++++++++ACTUATORS++++++++++
+//---BRAKE-----
+const uint16_t a_BRAKE_pin = 10;
+byte a_BRAKE_do;
 
-    // Setup output relay pins
-    SetupOutputPin(a_LOWBEAM);
-    SetupOutputPin(a_HIGHBEAM);
-    SetupOutputPin(a_HORN);
-    SetupOutputPin(a_INSTRLIGHTS);
-
-    // Setup NeopixelsBuses
-    stripLeftFront.Begin();
-    stripLeftRear.Begin();
-    stripRightFront.Begin();
-    stripRightRear.Begin();
-    stripTail.Begin();
-    //
-    stripLeftFront.Show();
-    stripLeftRear.Show();
-    stripRightFront.Show();
-    stripRightRear.Show();
-    stripTail.Show();
-    
-    // turn signals color
-    TurnSignalsColor = RgbColor(124,16,0);
-
-    // Setup Clickbuttons
-    b_LEFT_cB.debounceTime   = 20;   // Debounce timer in ms
-    b_LEFT_cB.multiclickTime = 180;  // Time limit for multi clicks
-    b_LEFT_cB.longClickTime  = 1000; // time until "held-down clicks" register
-
-    b_BEAM_cB.debounceTime   = 20;   // Debounce timer in ms
-    b_BEAM_cB.multiclickTime = 180;  // Time limit for multi clicks
-    b_BEAM_cB.longClickTime  = 1000; // time until "held-down clicks" register
-
-    b_HORN_cB.debounceTime   = 20;   // Debounce timer in ms
-    b_HORN_cB.multiclickTime = 180;  // Time limit for multi clicks
-    b_HORN_cB.longClickTime  = 1000; // time until "held-down clicks" register
-
-    b_RIGHT_cB.debounceTime   = 20;   // Debounce timer in ms
-    b_RIGHT_cB.multiclickTime = 180;  // Time limit for multi clicks
-    b_RIGHT_cB.longClickTime  = 1000; // time until "held-down clicks" register
-
-    
-    
-}
-
-void loop(){
-
-    // this is where the magic happens:
-    // An event is registered on a click button
-    // The corresponding animation is either started of stopped
-    // Exemple :
-    //      A click on right turn button ==> Check current state of system ? (maybe add bools in global scope
-    //                                                                        to memorize current state ?)
-    //          animations of both left strips is started
-    //          animations of both right strips is stopped
-
-    if (b_LEFT_cB.clicks == 1){ // Left button pressed once
-        // Check current states of turn signals: (is it "stopped", "L", "R", "W")
-            // if L --> stop
-            // else --> play L
-            if (animations.)
-
-    
-        
-        
-        // if animation is playing, stop it
-        if (animations.IsAnimationActive(anim_FRONTLEFT)){
-            animations.StopAnimation(anim_FRONTLEFT);
-        } else {
-            animations.StartAnimation(anim_FRONTLEFT,);
-        }
-        // if animation is not playing, start it
-    }
-
-
-    animations.UpdateAnimations();
-    ShowAllStrips();
-}
-
-
-
-
-
-
-
-
-void SetupOutputPin(int pinNumber){
-    PinMode(pinNumber, OUTPUT);
-    digitalWrite(pinNumber, 0);
-}
-
-// void SetupInputPinPullup(int pinNumber){
-//   PinMode(pinNumber, INPUT);
-//   digitalWrite(pinNumber, 0);
-// }
-
-
-
-
-
-
-
-
+#pragma endregion
 
 #pragma region TURNSIGNAL
 // ++++++++++++++COMMANDES++++++++++
@@ -227,11 +112,58 @@ byte aff_LEFT_do=0;
 byte a_RIGHT_do=0;
 byte aff_RIGHT_do=0;
 
+#if NEOPIXELS == 1
+
+const uint16_t PixelCount = 36; // common number of pixels (real is 12 but 36 allows for cooler animation)
+const uint16_t AnimCount = 5; //max 5 anims runnin at the same time (5 equipments)
+const uint16_t TailLength = 12; // length of the tail, must be shorter than PixelCount
+const float MaxLightness = 0.4f; // max lightness at the head of the tail (0.5f is full bright)
+RgbColor color;  //  = RgbColor(255,30,0) --- TODO ----
+
+const uint16_t a_LEFTFRONT_pin = 12;  // data pin for neopixel
+//const uint16_t a_RIGHTFRONT_pin = 3;  // data pin for neopixel
+//const uint16_t a_LEFTREAR_pin = 11;  // data pin for neopixel
+//const uint16_t a_RIGHTREAR_pin = 12;  // data pin for neopixel
+
+//NeoGamma<NeoGammaTableMethod> colorGamma; // for any fade animations, best to correct gamma
+
+NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> stripLeftFront(PixelCount, a_LEFTFRONT_pin);   // new strip
+//NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> stripRightFront(PixelCount, a_RIGHTFRONT_pin); // new strip
+//NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> stripLeftRear(PixelCount, a_LEFTREAR_pin);   // new strip
+//NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> stripRightRear(PixelCount, a_RIGHTREAR_pin); // new strip
+
+NeoPixelAnimator animations(AnimCount); // NeoPixel animation management object
+
+byte hasFrontLeftStarted = 0;
+
+
+
+#else
+const uint16_t a_LEFT_pin = 12;
+const uint16_t a_RIGHT_pin = 11;
+#endif
 
 #pragma endregion
 
 //===============================================================
 
+void setup(){
+
+  Serial.begin(115200);
+  #if NEOPIXELS ==1
+  setupNeoPixelSignals();
+  #endif
+
+  //#if MODE == CLICKBUTTONS
+  setupBrakeClickButtons();
+  setupHornClickButtons();
+  setupBeamClickButtons();
+  setupTurnClickButtons();
+  //#elif MODE == COMMODOS
+
+
+  //#endif
+}
 
 void loop(){
 
