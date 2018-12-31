@@ -94,11 +94,12 @@ NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> stripRightFront(TurnSignalPixelCoun
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> stripRightRear(TurnSignalPixelCount, a_REARRIGHT);
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> stripTail(TailPixelCount, a_TAIL);
 
+// Beam section
+byte f_BEAM_ON;
+byte f_BEAM_HB;
 
 // Debug section
 char buf [64];
-byte isLEDON = HIGH;
-unsigned long frameCounter = 0;
 
 void setup(){
 
@@ -135,6 +136,18 @@ void setup(){
     b_RIGHT_cB.multiclickTime = 180;  // Time limit for multi clicks
     b_RIGHT_cB.longClickTime  = 1000; // time until "held-down clicks" register
 
+    // Setup beam toggles:
+    f_BEAM_ON = HIGH;
+    f_BEAM_HB = LOW;
+    digitalWrite(a_HIGHBEAM, LOW);
+    digitalWrite(a_LOWBEAM, HIGH);
+
+    // Setup Instrument lights
+    digitalWrite(a_INSTRLIGHTS, f_BEAM_ON);
+
+    // Setup Horn
+    digitalWrite(a_HORN, LOW);
+
 }
 
 void loop(){
@@ -159,8 +172,7 @@ void loop(){
         }
     }
 
-    // Warnings handler
-    if (b_RIGHT_cB.clicks == -1 || b_LEFT_cB.clicks == -1){
+    if (b_RIGHT_cB.clicks == -1 || b_LEFT_cB.clicks == -1){ // Long click on turn buttons
       if (f_WARNINGS_READY){ // Toggle Warnings ON/OFF depending on running or not!
             // reset armed indicator
             f_WARNINGS_READY = 0;
@@ -174,14 +186,29 @@ void loop(){
       else { // Arm warning indicators
             f_WARNINGS_READY = 1;
       }
-  }
+    }
+
+    // Beam function
+    if (b_BEAM_cB.clicks == 1) f_BEAM_HB = !f_BEAM_HB;
+    if (b_BEAM_cB.clicks == -1) f_BEAM_ON =!f_BEAM_ON;
+
+    if (f_BEAM_ON){
+        digitalWrite(a_HIGHBEAM, f_BEAM_HB);
+        digitalWrite(a_LOWBEAM, !f_BEAM_HB);
+    } else {
+        digitalWrite(a_HIGHBEAM, LOW);
+        digitalWrite(a_LOWBEAM, LOW);
+    }
+
+    // Instruments lights with beams
+    digitalWrite(a_INSTRLIGHTS, f_BEAM_ON);
+
+    // Horn
+    digitalWrite(a_HORN, b_HORN_cB.depressed);
 
     animations.UpdateAnimations();
     ShowAllStrips();
 }
-
-
-
 
 
 // ======== HELPERS & OTHERS ============
