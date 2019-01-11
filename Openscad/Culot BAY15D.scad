@@ -1,3 +1,5 @@
+module culot(){
+
 color("white",0.75)
 cylinder(h=20, d=15.1, center=false, $fn=500);
 
@@ -44,3 +46,8 @@ translate([0,0,22]){
                 cylinder(h=2,d=23,center = true, $fn=500);
                 }
         }
+}
+difference(){
+    culot();
+    translate([15,0,20])cylinder(h=20,d=4,center = true,$fn=100);
+    }
