@@ -1,16 +1,15 @@
 #include <ClickButton.h>
 #include <NeoPixelBus.h>
 #include <NeoPixelAnimator.h>
+#include <ACS712.h>
 
-
-// Either COMMODOS or CLICKBUTTONS
-#define COMMODOS 0
+#define COMMODOS 1 // Are we in commodos (for turns) or clickbutton setup ?
 
 // Indexes of animations players
 #define anim_TURNSIGNALS 0
 #define anim_FRONTBEAM 1         // ON / OFF
 #define anim_TAIL 2              // Three states: LOW / HIGH / OFF
-#define anim_HORN 3              // ON / OFF
+#define anim_MESURECOURANT 3              // ON / OFF
 
 // =================== MAPPING ===================
 //                   ____________                
@@ -48,10 +47,10 @@
 //                             
 
 
-#define BUTTON_LEFT 14    // Clickbutton
+#define BUTTON_LEFT 14    // Clickbutton / SWITCH
 #define BUTTON_BEAM 15    // clickbutton
 #define BUTTON_HORN 16    // clickbutton
-#define BUTTON_RIGHT 17   // Clickbutton
+#define BUTTON_RIGHT 17   // Clickbutton / SWITCH
 #define CONTACT_BRAKE 18  // Contact
 
 #define a_FRONTLEFT 2   // Neopixel
@@ -63,6 +62,8 @@
 #define a_HORN 8        // SS-Relay
 #define a_INSTRLIGHTS 9 // SS-Relay
 #define a_TAIL 10       // Neopixel
+
+//#define SENSOR_CURRENT 19 // Current sensor
 
 // Animator parameters
 const uint16_t AnimCount = 4; //max 7 anims runnin at the same time (7 equipments)
@@ -78,7 +79,7 @@ const float MaxLightness = 0.4f; // max lightness at the head of the tail (0.5f 
 const float TurningAnimationTime = 1000; // duration of animation to loop (in ms)
 uint16_t TurningAnimationCurrentlyRunning = 0; // 0=off ; 1=left ; 2=right ; 3=warnings
 byte f_WARNINGS_READY = 0;
-RgbColor TurnSignalsColor(70,7	,0);  //  = RgbColor(255,30,0) --- TODO ----
+RgbColor TurnSignalsColor(50, 4, 0);  //  = RgbColor(255,30,0) --- TODO ----
 
 
 // Buttons & inputs (constructors)
@@ -97,6 +98,14 @@ NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> stripTail(TailPixelCount, a_TAIL);
 // Beam section
 byte f_BEAM_ON;
 byte f_BEAM_HB;
+
+// Current sensor section
+//ACS712 capteurCourant(ACS712_05B, SENSOR_CURRENT);
+//float mesureCourant;
+//int compteur=0;
+// int numberOfSamples=20;
+// int samplingTime=5;
+// float zeroOffset = 0.0391;
 
 // Debug section
 char buf [64];
@@ -118,6 +127,11 @@ void setup(){
     stripRightFront.Begin();
     stripRightRear.Begin();
     stripTail.Begin();
+    stripLeftFront.Show();
+    stripLeftRear.Show();
+    stripRightFront.Show();
+    stripRightRear.Show();
+    stripTail.Show();
 
     // Setup Clickbuttons
     b_LEFT_cB.debounceTime   = 20;   // Debounce timer in ms
@@ -148,6 +162,9 @@ void setup(){
     // Setup Horn
     digitalWrite(a_HORN, LOW);
 
+    // Setup current sensor
+    //delay(100);
+    //capteurCourant.calibrate();
 }
 
 void loop(){
@@ -156,6 +173,30 @@ void loop(){
 
     // Where the magic happens :D
 
+#if COMMODOS == 1
+    if (b_LEFT_cB.depressed && b_RIGHT_cB.depressed){ //ERROR --> shorting on one of the buttons
+        Serial.println("Error, one of the switch is shorted to ground");
+        animations.StartAnimation(anim_TURNSIGNALS, TurningAnimationTime, NotTurningAnimation); // TODO: Add error anim
+    } else if (b_LEFT_cB.depressed){ // Right turn
+        if (TurningAnimationCurrentlyRunning != 1)
+            animations.StartAnimation(anim_TURNSIGNALS, TurningAnimationTime, TurningLeftAnimation);
+    } else if (b_RIGHT_cB.depressed) { // Left turn
+        if (TurningAnimationCurrentlyRunning != 2)
+            animations.StartAnimation(anim_TURNSIGNALS, TurningAnimationTime, TurningRightAnimation);
+    } else if (b_BEAM_cB.clicks == -2) { //Start warnings
+        if (TurningAnimationCurrentlyRunning != 3){
+            animations.StartAnimation(anim_TURNSIGNALS, TurningAnimationTime, WarningAnimation);
+        } else {
+            animations.StartAnimation(anim_TURNSIGNALS, TurningAnimationTime, NotTurningAnimation);
+        }
+    }
+    else if (TurningAnimationCurrentlyRunning != 3){ // Not turning && not warning
+        animations.StartAnimation(anim_TURNSIGNALS, TurningAnimationTime, NotTurningAnimation);
+    }
+
+#else
+
+    //------Clickbutton case - not used in handlebar V1-----------
     if (b_LEFT_cB.clicks == 1){ // Left button pressed once
         if (TurningAnimationCurrentlyRunning != 1)
             animations.StartAnimation(anim_TURNSIGNALS, TurningAnimationTime, TurningLeftAnimation);
@@ -172,6 +213,7 @@ void loop(){
         }
     }
 
+    //-------Clickbutton case - not used here, using double long click on BEAM------
     if (b_RIGHT_cB.clicks == -1 || b_LEFT_cB.clicks == -1){ // Long click on turn buttons
       if (f_WARNINGS_READY){ // Toggle Warnings ON/OFF depending on running or not!
             // reset armed indicator
@@ -187,6 +229,7 @@ void loop(){
             f_WARNINGS_READY = 1;
       }
     }
+#endif
 
     // Beam function
     if (b_BEAM_cB.clicks == 1) f_BEAM_HB = !f_BEAM_HB;
@@ -208,6 +251,7 @@ void loop(){
 
     animations.UpdateAnimations();
     ShowAllStrips();
+
 }
 
 
@@ -239,6 +283,7 @@ void UpdateClickButtonsBeforeReading(){
 }
 
 #pragma region animations
+
 
 void NotTurningAnimation(const AnimationParam& _param){
     TurningAnimationCurrentlyRunning = 0;
@@ -391,4 +436,24 @@ void WarningAnimation(const AnimationParam& _param){
     }
 }
 
+/* void MeasuringCurrentAnimation(const AnimationParam& _param){
+
+    // Remaining issue: zero-ing at startup ;
+    // Arduino idle current is approximately 39 mA
+    
+    if (_param.state == AnimationState_Completed) {
+        if (compteur < numberOfSamples){
+            mesureCourant += capteurCourant.getCurrentDC() + zeroOffset;
+            ++compteur;
+            animations.RestartAnimation(anim_MESURECOURANT);
+        } else {
+            mesureCourant /= compteur*10;
+            Serial.println(mesureCourant*1000,0);
+            compteur = 0;
+            mesureCourant = 0;
+            animations.RestartAnimation(anim_MESURECOURANT);
+        }
+    }
+}
+*/
 #pragma endregion
