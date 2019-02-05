@@ -1,5 +1,6 @@
 {
     "board": "arduino:avr:uno",
-    "sketch": "Centrale-moto/Centrale-moto.ino",
+    "_sketch": "Centrale-moto/Centrale-moto.ino",
+    "sketch": "Allumage-electronique/Allumage-electronique.ino",
     "port": "/dev/cu.usbmodem1411"
 }

@@ -457,3 +457,5 @@ void WarningAnimation(const AnimationParam& _param){
 }
 */
 #pragma endregion
+
+// TODO :  add brake neopixels (or led plates) + Do animations
