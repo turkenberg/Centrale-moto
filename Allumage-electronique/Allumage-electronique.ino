@@ -134,7 +134,7 @@ void  CalcD ()//////////////////
   {
     if  (T >=  Tc[j]) {     //on a trouvé le bon segment de la courbe d'avance
       D =  float(T * ( C1[j] - modC1 )  + C2[j]) ;//D en µs, C2 incorpore le temps de calcul tcor
-      if ( T > Tplancher)D = T * RDzero;//Imposer 0° d'avance de 0 à 500t/mn
+      if ( T > Tplancher) D = T * RDzero;//Imposer 0° d'avance de 0 à 500t/mn
       break;  //Sortir, on a D
     }
   }
@@ -154,7 +154,7 @@ void  Etincelle ()//////////
   digitalWrite(Led13, 0); //Temoin
   //Maintenant que l'étincelle est émise, il faut rétablir Ibob au bon moment
 
-  if (Multi && (T >= T_multi))Genere_multi();
+  if (Multi && (T >= T_multi)) Genere_multi();
   else {
     switch (Dwell)  //Attente courant coupé selon le type de Dwell
 

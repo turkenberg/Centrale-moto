@@ -1,0 +1,118 @@
+http://a110a.free.fr/SPIP172/article.php3?id_article=144
+
+Programmer un Arduino SANS boot loader
+Pourquoi supprimer un boot loader ?
+
+-  soit pour récupérer environ 2k de mémoire
+
+-  soit pour un démarrage immédiat du logiciel sans l’attente d’environ 2s due au boot loader qui teste si la liaison série est active.
+
+Création d’un Arduino Nano without boot loader
+
+Dans un premier temps, on ajoute à la liste des descriptifs de types d’Arduino un "Arduino Nano without bootloader". Pour cela il faut ajouter environ 30 lignes de texte au fichier boards.txt qui se trouve dans le repertoire ( cas de Windows 7)
+
+c :\ProgFile X86\arduino\hardware\arduino\avr
+
+le fichier boards.txt contient tous les types d’Arduino.
+
+-  Faire une copie de sécurité puis l’ouvrir avec un éditeur de texte type Notepad
+
+-  repérer le bloc d’une trentaine de lignes entre deux lignes de dièses qui commence par
+
+.
+
+.
+
+###########################################################
+
+nano.name = ArduinoNano
+
+nano.upload.tool=avrdude
+
+nano.upload.protocol=arduino
+
+. . .
+
+C’est le début du bloc qui nous intéresse.
+
+-  faire un copier/coller de ce bloc à la suite.On dédouble ce bloc pour créer une copie modifiée.
+
+-  la première ligne est à changer en :
+
+nanowb.name=Arduino Nano without bootloader
+
+-  ensuite toutes les lignes commençant par nano.xxx sont modifiées en nanowb.xxxx
+
+-  pour la ligne se terminant par maximum_size= 30720 changer 30720 en 32768.C’est la mémoire gagnée par suppression du boot loader.
+
+-  sauver l’ ensemble comme boards.txt à la place de l’original.
+
+Exemple de bloc ajouté à la liste de tous les Arduino dans le fichier boards.txt.
+
+##############################################################
+
+nanowb.name=Arduino Nano without bootloader
+
+nanowb.upload.tool=avrdude
+
+nanowb.upload.protocol=arduino
+
+nanowb.bootloader.tool=avrdude
+
+nanowb.bootloader.unlock_bits=0x3F
+
+nanowb.bootloader.lock_bits=0x0F
+
+nanowb.build.f_cpu=16000000L
+
+nanowb.build.board=AVR_NANO
+
+nanowb.build.core=arduino
+
+nanowb.build.variant=eightanaloginputs
+
+## Arduino Nano w/ ATmega328
+
+## -------------------------
+
+nanowb.menu.cpu.atmega328=ATmega328
+
+nanowb.menu.cpu.atmega328.upload.maximum_size=32768
+
+nanowb.menu.cpu.atmega328.upload.maximum_data_size=2048
+
+etc
+
+##############################################################
+
+-  Pour vérifier que tout s’est bien passé relancer l’IDE Arduino, Outils/Type de cartes
+
+On doit trouver la nouvelle carte "Arduino Nano without bootloader " dans la liste.
+
+Programmation sans boot loader
+
+Cette programmation nécessite un autre Nano, classiquement équipé d’un boot loader.
+
+On utilise le circuit ci dessus (voir : Reprogrammer le boot loader ) le Nano à programmer sans boot loader étant sur la gauche.
+
+-  Aller dans Fichier/Exemples/Arduino as ISP.
+
+-  Téléverser ce sketch
+
+-  Outils/Type de carte/Arduino Nano without bootloader
+
+-  Ouvrir le sketch à televerser sans bootloader
+
+-  ATTENTION : ne PAS cliquer sur la flèche de televersement habituelle mais utiliser :
+
+Croquis/Téléverser avec un programmateur
+
+-  le Nano de droite écrit le sketch dans le Nano de gauche, en écrasant le boot loader s’il existait
+
+On peut vérifier que le boot loader n’existe de plus de 2 façons :
+
+-  l’execution du sketch démarre immédiatement, sans les 2 s de délai habituelles.
+
+-  on ne peut plus programmer ce Nano.
+
+Pour une reprogrammation ultérieure, on commencera par restituer le boot loader comme indiqué ci dessus.
