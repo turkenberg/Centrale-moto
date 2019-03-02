@@ -13,15 +13,16 @@ char ver[] = "Version du 11_10_18";
 //**************  Seulement  6 lignes à renseigner obligatoirement.****************
 //**********Ce sont:  Na  Anga  Ncyl  AngleCapteur  CaptOn  Dwell******************
 
-int Na[] = {0, 500, 800, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4200, 4600, 5100, 7000, 0};//t/*mn vilo
+int Na[] = {0, 500, 800, 2000, 4200, 10000, 0};//t/*mn vilo
 //Na[] et Anga[] doivent obligatoirement débuter puis se terminer par  0, et  contenir des valeurs  entières >=1
 //Le dernier Na fixe la ligne rouge, c'est à dire la coupure de l'allumage.
 //Le nombre de points est libre.L'avance est imposée à 0° entre 0 et Nplancher t/mn
 //Anga [] degrés d'avance vilebrequin correspondant ( peut croitre ou decroitre)
-int Anga[] = {0, 1 , 8 , 10  , 12,    14,  16,    22,  24,   24,   25,    26,   28,   28, 0};
-int Ncyl = 2;           //Nombre de cylindres, moteur 4 temps.Multiplier par 2 pour moteur 2 temps
-const int AngleCapteur = 45; //Position en degrès avant le PMH du capteur(Hall ou autre ).
-const int CaptOn = 1;  //CapteurOn = 1 déclenchement sur front montant (par ex. capteur Hall "saturé")
+//int Anga[] = {0, 1 , 8 , 10  , 12,    14,  16,    22,  24,   24,   25,    26,   28,   28, 0};
+int Anga[] = {0, 10 , 10, 10, 38, 38, 0};
+int Ncyl = 1;           //Nombre de cylindres, moteur 4 temps.Multiplier par 2 pour moteur 2 temps
+const int AngleCapteur = 75; //Position en degrès avant le PMH du capteur(Hall ou autre ).
+const int CaptOn = 0;  //CapteurOn = 1 déclenchement sur front montant (par ex. capteur Hall "saturé")
 //CapteurOn = 0 déclenchement sur front descendant (par ex. capteur Hall "non saturé").Voir fin du listing
 const int Dwell = 3;
 //Dwell = 1 pour alimenter la bobine en permanence sauf 1ms/cycle.Elle doit pouvoir chauffer sans crainte
@@ -57,7 +58,7 @@ const int N_multi = 2000; //t/mn pour 4 cylindres par exemple
 //A la place de la courbe a, on peut selectionner la courbe b (D8 à la masse)ou la c (D9 à la masse)
 //*******//*********Courbe   b
 int Nb[] = {0,  3100, 0};   //Connecter D8 à la masse
-int Angb[] = {0,   12,   0};
+int Angb[] = {0,   8,   0};
 //*******//*********Courbe   c
 int Nc[] = {0,  6100,  0};    //Connecter D9 à la masse
 int Angc[] = {0,  16,   0};
@@ -74,16 +75,16 @@ int delAv = 2;//delta avance,par ex 2°. Quand Pot avance d'une position, l'avan
 //*****************************************************************************
 //*********************Compte-tours sensible************************
 SoftwareSerial BT(10, 11);//Ceci est une option pour compte-tours en Bluetooth
-//                     D11 Arduino vers  RX du module BlueTooth HC05/06                    
+//                     D11 Arduino vers  RX du module BlueTooth HC05/06
 //                    +5V Arduino à Vcc, Gnd Arduino à Gnd
-//IMPORTANT mettre le HC05/06 en mode 115200 bps via une commande AT 
+//IMPORTANT mettre le HC05/06 en mode 115200 bps via une commande AT
 //Voir http://a110a.free.fr/SPIP172/article.php3?id_article=150 pour effctuer ce passage
 //Sur le smartphon installer une appli telle que "Bluetooth Terminal HC-05"
 //ou encore "BlueTerm+" ou equivallent.Inscrire le module sur le smartphone
 //avec le code pin 1234, la première fois seulement.
 
 //***********************Variables du sketch************************************
-const int Bob = 4;    //Sortie D4 vers bobine.En option, on peut connecter une Led avec R=330ohms vers la masse
+const int Bob = 12;    //Sortie D4 vers bobine.En option, on peut connecter une Led avec R=330ohms vers la masse
 const int Cible = 2;  //Entrée sur D2 du capteur, R PullUp
 const int Pot = A0;   //Entrée analogique sur A0 pour potard de changement de courbes. R PullUp
 const int Led13 = 13; //Temoin sur tout Arduino, suit le courant de bobine
@@ -119,7 +120,7 @@ int unsigned long NT  = 0;//Facteur de conversion entre N et T à Ncyl donné
 int unsigned long NTa  = 0;//Facteur de conversion entre N et T pour affichage sur smartphone
 int AngleCibles = 0;//Angle entre 2 cibles, 180° pour 4 cyl, 120° pour 6 cyl, par exemple
 int UneEtin = 1; //=1 pour chaque étincelle, testé et remis à zero par isr_GestionIbob()
-int Ndem = 60;//Vitesse estimée du vilo entrainé par le demarreur en t/mn
+int Ndem = 300;//Vitesse estimée du vilo entrainé par le demarreur en t/mn
 int unsigned long Tdem  = 0;  //Periode correspondante à Ndem,forcée pour le premier tour
 int Mot_OFF = 0;//Sera 1 si moteur detecté arrété par l'isr_GestionIbob()
 int unsigned long Ttrans; //T transition de Dwell 4
@@ -181,11 +182,12 @@ void  Etincelle ()//////////
   }
   //  Pour Dwell=4 uniquement, tant que N < Ntrans (Dwell4 ou non) on affiche en Bluetooth le regime et l'avance
   if ((Dwell != 4) || (T > Ttrans)) {
-    BT.println(NTa / T, 1);  //Afficher N et avance sur smart
-    Serial.print("\t");
-    Serial.print("\t");
-    Serial.print("\t");
-    BT.println(45 - (D + tcor)*AngleCibles / T);
+    //BT.println(NTa / T, 1);  //Afficher N et avance sur smart
+    //Serial.print("\t");
+    //Serial.print("\t");
+    //Serial.print("\t");
+    //BT.println(45 - (D + tcor)*AngleCibles / T);
+    //Serial.println(NTa / T, 1);
   }
 
   Tst_Pot();//Voir si un potard connecté pour deplacer la courbe ou selectionner une autre courbe
@@ -297,6 +299,7 @@ void setup()///////////////
   pinMode(Courbe_b, INPUT_PULLUP); //Entrée à la masse pour selectionner la courbe b
   pinMode(Courbe_c, INPUT_PULLUP); //Entrée à la masse pour selectionner la courbe c
   pinMode(Led13, OUTPUT);//Led d'origine sur tout Arduino, temoin du courant dans la bobine
+  //pinMode(flash, OUTPUT);//Led stroboscopique pour le calage sur le villebrequin
 
   Init();// Executée une fois au demarrage et à chaque changement de courbe
 }
@@ -315,8 +318,10 @@ void loop()   ////////////////
   if (T > Tlim)     //Sous la ligne rouge?
   { CalcD(); // Top();  //Oui, generer une etincelle
     Etincelle();
+    //digitalWrite(flash,HIGH);//Allumer la led stroboscopique
   }
   while (digitalRead(Cible) == CaptOn); //Attendre si la cible encore active
+  //digitalWrite(flash,LOW);//Eteindre la led stroboscopique
 }
 /////////////////Exemples de CAPTEURS/////////////////
 //Capteur Honeywell cylindrique 1GT101DC,contient un aimant sur le coté,type non saturé, sortie haute à vide,
