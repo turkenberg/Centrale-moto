@@ -21,19 +21,20 @@ ratio_cible = 0.7;
 // Equilibrage
 epaisseur_porte_cible = 2;
 rayon_centre_contrepoids = 8;
-angle_masse_contrepoids = 120;
+angle_masse_contrepoids = 109;
 profondeur_contrepoids = 20;
 diametre_support_contrepoids = diametre_exterieur + epaisseur_porte_cible;
 r_int_contrepoids = (rayon_centre_contrepoids - profondeur_contrepoids)/2;
 // =========================
 
 // EQUILIBRAGE TOURNANT
-PLAQUE_EN_0();
-//CIBLE_EN_0();
+//PLAQUE_EN_0();
+//CIBLES_EN_0(23); // <-- 23 cibles car: Dneodyne = 7 vs Dabs = 1 + infill @30% => 7*(1/0.30) = facteur 23
+//translate([0.423,0,2.9]) color("red") sphere(r=1,center = true, $fn = 32);
 
 // DESSIN ======================================
-//CORPS();
-//PLAQUE();
+CORPS();
+PLAQUE();
 //CIBLE();
 
 module clavette(){
@@ -145,11 +146,13 @@ module PLAQUE_EN_0(){
     color("yellow") plaque_percee();
 }
 
-module CIBLE_EN_0(){
+module CIBLES_EN_0(density_int = 7){
     //rotate([0,0,angle_clavette_cible]) 
-    translate([rayon_centre_cible, 0, epaisseur_porte_cible])
+    //translate([rayon_centre_cible, 0, epaisseur_porte_cible])
     //translate([0,0, hauteur_HT_cible])
-    color("pink") cible();
+    for (i=[1:density_int])
+        translate([rayon_centre_cible,0,i*epaisseur_cible])
+        color("pink") cible();
 }
 
 
