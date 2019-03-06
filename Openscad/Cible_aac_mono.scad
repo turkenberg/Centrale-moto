@@ -1,15 +1,15 @@
 // CORPS ====================
 longueur_totale = 28;
 diametre_interieur = 11;
-epaisseur_corps = 3;
+epaisseur_corps = 4;
 profondeur_clavette = 3;
 diametre_clavette = 3;
 diametre_exterieur = diametre_interieur + epaisseur_corps;
 
 // PORTE-CIBLE===============
 // Position
-hauteur_HT_cible = 19; // à partir de la base
-angle_clavette_cible = -130; // en degrés
+hauteur_HT_cible = 19.5; // à partir de la base
+angle_clavette_cible = -70; // en degrés
 rayon_centre_cible = 15;
 enfoncement_cible = 1;
 // Geométrie
