@@ -9,7 +9,8 @@
                 "${workspaceFolder}/libraries/ClickButton-master",
                 "${workspaceFolder}/libraries/NeoPixelBus-master",
                 "${workspaceFolder}/libraries/NeoPixelBus-master/src",
-                "${workspaceFolder}/libraries/NeoPixelBus-master/src/internal"
+                "${workspaceFolder}/libraries/NeoPixelBus-master/src/internal",
+                "${workspaceFolder}/libraries/FastLED-master"
             ],
             "forcedInclude": [
                 "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/Arduino.h",

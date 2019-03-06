@@ -8,7 +8,7 @@ diametre_exterieur = diametre_interieur + epaisseur_corps;
 
 // PORTE-CIBLE===============
 // Position
-hauteur_HT_cible = 21; // à partir de la base
+hauteur_HT_cible = 19; // à partir de la base
 angle_clavette_cible = -130; // en degrés
 rayon_centre_cible = 15;
 enfoncement_cible = 1;

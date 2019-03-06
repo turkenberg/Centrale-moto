@@ -6,6 +6,17 @@
 //**************************************************************
 #include "TimerOne.h"
 #include <SoftwareSerial.h>
+#include <FastLED.h>
+
+// Flashing W2812b stuff:
+#define NUM_LEDS 10
+// For led chips like Neopixels, which have a data line, ground, and power, you just
+// need to define DATA_PIN.  For led chipsets that are SPI based (four wires - data, clock,
+// ground, and power), like the LPD8806 define both DATA_PIN and CLOCK_PIN
+#define DATA_PIN 6
+// Define the array of leds
+CRGB leds[NUM_LEDS];
+// End of flashing stuff
 
 char ver[] = "Version du 11_10_18";
 
@@ -21,7 +32,7 @@ int Na[] = {0, 500, 800, 2000, 4200, 10000, 0};//t/*mn vilo
 //int Anga[] = {0, 1 , 8 , 10  , 12,    14,  16,    22,  24,   24,   25,    26,   28,   28, 0};
 int Anga[] = {0, 10 , 10, 10, 38, 38, 0};
 int Ncyl = 1;           //Nombre de cylindres, moteur 4 temps.Multiplier par 2 pour moteur 2 temps
-const int AngleCapteur = 75; //Position en degrès avant le PMH du capteur(Hall ou autre ).
+const int AngleCapteur = 64; //Position en degrès avant le PMH du capteur(Hall ou autre ).
 const int CaptOn = 0;  //CapteurOn = 1 déclenchement sur front montant (par ex. capteur Hall "saturé")
 //CapteurOn = 0 déclenchement sur front descendant (par ex. capteur Hall "non saturé").Voir fin du listing
 const int Dwell = 3;
@@ -57,11 +68,11 @@ const int N_multi = 2000; //t/mn pour 4 cylindres par exemple
 //*******************MULTICOURBES****IF FAUT METTRE D8 ou D9 A LA MASSE!!!!!!!*******
 //A la place de la courbe a, on peut selectionner la courbe b (D8 à la masse)ou la c (D9 à la masse)
 //*******//*********Courbe   b
-int Nb[] = {0,  3100, 0};   //Connecter D8 à la masse
-int Angb[] = {0,   8,   0};
+int Nb[] = {0, 500,  3400, 0};   //Connecter D8 à la masse
+int Angb[] = {0, 10,  10,   0};
 //*******//*********Courbe   c
-int Nc[] = {0,  6100,  0};    //Connecter D9 à la masse
-int Angc[] = {0,  16,   0};
+int Nc[] = {0,  500, 9000,  0};    //Connecter D9 à la masse
+int Angc[] = {0,  10, 35,   0};
 //**********************************************************************************
 //************Ces 3 valeurs sont eventuellement modifiables*****************
 //Ce sont: Nplancher, trech , Dsecu et delAv
@@ -252,6 +263,10 @@ void  Init ()/////////////
   Mot_OFF = 1;// Signalera à loop() le premier front
   digitalWrite(Bob, 0); //par principe, couper la bobine
   digitalWrite(Led13, 0); //Temoin
+
+// Test mode ?
+  
+
 }
 void  isr_GestionIbob()//////////
 { Timer1.stop();    //Arreter le decompte du timer
@@ -302,6 +317,7 @@ void setup()///////////////
   //pinMode(flash, OUTPUT);//Led stroboscopique pour le calage sur le villebrequin
 
   Init();// Executée une fois au demarrage et à chaque changement de courbe
+  InitFlashStuff();// Préparer le flash (optionnel)
 }
 ///////////////////////////////////////////////////////////////////////////
 void loop()   ////////////////
@@ -317,11 +333,11 @@ void loop()   ////////////////
   }
   if (T > Tlim)     //Sous la ligne rouge?
   { CalcD(); // Top();  //Oui, generer une etincelle
+    SetFlashOn(); // <-- FLASH ON
     Etincelle();
-    //digitalWrite(flash,HIGH);//Allumer la led stroboscopique
   }
+  SetFlashOff(); // <-- FLASH OFF
   while (digitalRead(Cible) == CaptOn); //Attendre si la cible encore active
-  //digitalWrite(flash,LOW);//Eteindre la led stroboscopique
 }
 /////////////////Exemples de CAPTEURS/////////////////
 //Capteur Honeywell cylindrique 1GT101DC,contient un aimant sur le coté,type non saturé, sortie haute à vide,
@@ -357,3 +373,28 @@ void loop()   ////////////////
 //{
 //  asm volatile ("  jmp 0");
 //}
+
+
+void InitFlashStuff(){
+    FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
+}
+
+void SetFlashOn(){
+   // For all leds in strip
+   for(int whiteLed = 0; whiteLed < NUM_LEDS; whiteLed = whiteLed + 1) {
+      // Turn every leds to white
+      leds[whiteLed] = CRGB::White;
+   }
+    // Show the leds (only one of which is set to white, from above)
+    FastLED.show();
+}
+
+void SetFlashOff(){
+   // For all leds in strip
+   for(int whiteLed = 0; whiteLed < NUM_LEDS; whiteLed = whiteLed + 1) {
+      // Turn every leds to black (off)
+      leds[whiteLed] = CRGB::Black;
+   }
+    // Show the leds (only one of which is set to white, from above)
+    FastLED.show();
+}
