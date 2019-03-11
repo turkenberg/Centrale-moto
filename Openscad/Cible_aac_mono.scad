@@ -1,15 +1,15 @@
 // CORPS ====================
 longueur_totale = 28;
-diametre_interieur = 11;
-epaisseur_corps = 4;
+diametre_interieur = 12;
+epaisseur_corps = 3;
 profondeur_clavette = 3;
 diametre_clavette = 3;
 diametre_exterieur = diametre_interieur + epaisseur_corps;
 
 // PORTE-CIBLE===============
 // Position
-hauteur_HT_cible = 19.5; // à partir de la base
-angle_clavette_cible = -70; // en degrés
+hauteur_HT_cible = 20; // à partir de la base
+angle_clavette_cible = -50; // en degrés
 rayon_centre_cible = 15;
 enfoncement_cible = 1;
 // Geométrie
@@ -19,17 +19,17 @@ epaisseur_cible = 2;
 epaisseur_cible_pleine = 1;
 ratio_cible = 0.7;
 // Equilibrage
-epaisseur_porte_cible = 2;
+epaisseur_porte_cible = 1;
 rayon_centre_contrepoids = 8;
-angle_masse_contrepoids = 109;
-profondeur_contrepoids = 20;
+angle_masse_contrepoids = 95;
+profondeur_contrepoids = 15;
 diametre_support_contrepoids = diametre_exterieur + epaisseur_porte_cible;
 r_int_contrepoids = (rayon_centre_contrepoids - profondeur_contrepoids)/2;
 // =========================
 
 // EQUILIBRAGE TOURNANT
 //PLAQUE_EN_0();
-//CIBLES_EN_0(23); // <-- 23 cibles car: Dneodyne = 7 vs Dabs = 1 + infill @30% => 7*(1/0.30) = facteur 23
+//CIBLES_EN_0(7); // <-- 23 cibles car: Dneodyne = 7 vs Dabs = 1 + infill @30% => 7*(1/0.30) = facteur 23
 //translate([0.423,0,2.9]) color("red") sphere(r=1,center = true, $fn = 32);
 
 // DESSIN ======================================
@@ -130,8 +130,10 @@ module CORPS(){ // Dessin et positionnement
 }
 
 module PLAQUE(){ // Dessin et positionnement
-    translate([0,0,hauteur_HT_cible]) rotate([0,0,angle_clavette_cible])
-    color("cyan") plaque_percee();
+    //translate([0,0,hauteur_HT_cible+epaisseur_porte_cible+epaisseur_cible+enfoncement_cible])
+    translate([0,0,hauteur_HT_cible])  
+        rotate([0,0,angle_clavette_cible])
+        color("cyan") plaque_percee();
 }
 
 module CIBLE(){ // Dessin et positionnement
@@ -151,7 +153,7 @@ module CIBLES_EN_0(density_int = 7){
     //translate([rayon_centre_cible, 0, epaisseur_porte_cible])
     //translate([0,0, hauteur_HT_cible])
     for (i=[1:density_int])
-        translate([rayon_centre_cible,0,i*epaisseur_cible])
+        translate([rayon_centre_cible,0,-i*epaisseur_cible])
         color("pink") cible();
 }
 
