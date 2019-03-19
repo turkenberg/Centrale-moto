@@ -193,11 +193,11 @@ void  Etincelle ()//////////
   }
   //  Pour Dwell=4 uniquement, tant que N < Ntrans (Dwell4 ou non) on affiche en Bluetooth le regime et l'avance
   if ((Dwell != 4) || (T > Ttrans)) {
-    //BT.println(NTa / T, 1);  //Afficher N et avance sur smart
+    BT.println(NTa / T, 1);  //Afficher N et avance sur smart
     //Serial.print("\t");
     //Serial.print("\t");
     //Serial.print("\t");
-    //BT.println(45 - (D + tcor)*AngleCibles / T);
+    BT.println(45 - (D + tcor)*AngleCibles / T);
     //Serial.println(NTa / T, 1);
   }
 
