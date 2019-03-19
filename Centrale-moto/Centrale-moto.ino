@@ -4,6 +4,7 @@
 #include <ACS712.h>
 
 #define COMMODOS 1 // Are we in commodos (for turns) or clickbutton setup ?
+#define activeRelay LOW// Is the relay active LOW or HIGH
 
 // Indexes of animations players
 #define anim_TURNSIGNALS 0
@@ -62,6 +63,7 @@
 #define a_HORN 8        // SS-Relay
 #define a_INSTRLIGHTS 9 // SS-Relay
 #define a_TAIL 10       // Neopixel
+#define a_TURNINDICATOR 11 // LED
 
 //#define SENSOR_CURRENT 19 // Current sensor
 
@@ -79,7 +81,7 @@ const float MaxLightness = 0.4f; // max lightness at the head of the tail (0.5f 
 const float TurningAnimationTime = 1000; // duration of animation to loop (in ms)
 uint16_t TurningAnimationCurrentlyRunning = 0; // 0=off ; 1=left ; 2=right ; 3=warnings
 byte f_WARNINGS_READY = 0;
-RgbColor TurnSignalsColor(50, 4, 0);  //  = RgbColor(255,30,0) --- TODO ----
+RgbColor TurnSignalsColor(124, 20, 0);
 
 
 // Buttons & inputs (constructors)
@@ -120,6 +122,7 @@ void setup(){
     SetupOutputPin(a_HIGHBEAM);
     SetupOutputPin(a_HORN);
     SetupOutputPin(a_INSTRLIGHTS);
+    SetupOutputPin(a_TURNINDICATOR);
 
     // Setup NeopixelsBuses
     stripLeftFront.Begin();
@@ -153,14 +156,14 @@ void setup(){
     // Setup beam toggles:
     f_BEAM_ON = HIGH;
     f_BEAM_HB = LOW;
-    digitalWrite(a_HIGHBEAM, LOW);
-    digitalWrite(a_LOWBEAM, HIGH);
+    digitalWrite(a_HIGHBEAM, !activeRelay);
+    digitalWrite(a_LOWBEAM, activeRelay);
 
     // Setup Instrument lights
-    digitalWrite(a_INSTRLIGHTS, f_BEAM_ON);
+    digitalWrite(a_INSTRLIGHTS, !activeRelay);
 
     // Setup Horn
-    digitalWrite(a_HORN, LOW);
+    digitalWrite(a_HORN, !activeRelay);
 
     // Setup current sensor
     //delay(100);
@@ -236,18 +239,25 @@ void loop(){
     if (b_BEAM_cB.clicks == -1) f_BEAM_ON =!f_BEAM_ON;
 
     if (f_BEAM_ON){
-        digitalWrite(a_HIGHBEAM, f_BEAM_HB);
-        digitalWrite(a_LOWBEAM, !f_BEAM_HB);
+        if (f_BEAM_HB) {
+            digitalWrite(a_HIGHBEAM, activeRelay);
+            digitalWrite(a_LOWBEAM, !activeRelay);
+        } else {
+            digitalWrite(a_HIGHBEAM, !activeRelay);
+            digitalWrite(a_LOWBEAM, activeRelay);
+        }
     } else {
-        digitalWrite(a_HIGHBEAM, LOW);
-        digitalWrite(a_LOWBEAM, LOW);
+        digitalWrite(a_HIGHBEAM, !activeRelay);
+        digitalWrite(a_LOWBEAM, !activeRelay);
     }
 
     // Instruments lights with beams
-    digitalWrite(a_INSTRLIGHTS, f_BEAM_ON);
+    //digitalWrite(a_INSTRLIGHTS, f_BEAM_ON);
+    digitalWrite(a_INSTRLIGHTS, !activeRelay); // Overriden to low for now
 
     // Horn
-    digitalWrite(a_HORN, b_HORN_cB.depressed);
+    //digitalWrite(a_HORN, b_HORN_cB.depressed);
+    digitalWrite(a_HORN, !activeRelay); // Overridden to low for now
 
     animations.UpdateAnimations();
     ShowAllStrips();
@@ -291,6 +301,7 @@ void NotTurningAnimation(const AnimationParam& _param){
     stripRightFront.ClearTo(RgbColor(0,0,0));
     stripLeftRear.ClearTo(RgbColor(0,0,0));
     stripRightRear.ClearTo(RgbColor(0,0,0));
+    digitalWrite(a_TURNINDICATOR, LOW);
 }
 
 void TurningLeftAnimation(const AnimationParam& _param){
@@ -322,11 +333,15 @@ void TurningLeftAnimation(const AnimationParam& _param){
                 stripLeftFront.SetPixelColor(i, RgbColor(0,0,0));
                 stripLeftRear.SetPixelColor(11-i, RgbColor(0,0,0));
             }
+
+            digitalWrite(a_TURNINDICATOR, HIGH);
             
         } else if (_param.progress < 0.666666f) {
 
             stripLeftFront.ClearTo(RgbColor(0,0,0));
             stripLeftRear.ClearTo(RgbColor(0,0,0));
+            
+            digitalWrite(a_TURNINDICATOR, LOW);
 
         } else if (_param.progress < 0.999999f) {
             
@@ -335,6 +350,8 @@ void TurningLeftAnimation(const AnimationParam& _param){
                 stripLeftFront.SetPixelColor(i, TurnSignalsColor);
                 stripLeftRear.SetPixelColor(11-i, TurnSignalsColor);
             }
+
+            digitalWrite(a_TURNINDICATOR, HIGH);
 
         }
     }
@@ -368,11 +385,15 @@ void TurningRightAnimation(const AnimationParam& _param){
                 stripRightFront.SetPixelColor(11-i, RgbColor(0,0,0));
                 stripRightRear.SetPixelColor(i, RgbColor(0,0,0));
             }
+
+            digitalWrite(a_TURNINDICATOR, HIGH);
             
         } else if (_param.progress < 0.666666f) {
 
             stripRightFront.ClearTo(RgbColor(0,0,0));
             stripRightRear.ClearTo(RgbColor(0,0,0));
+
+            digitalWrite(a_TURNINDICATOR, LOW);
 
         } else if (_param.progress < 0.999999f) {
 
@@ -381,6 +402,8 @@ void TurningRightAnimation(const AnimationParam& _param){
                 stripRightFront.SetPixelColor(11-i, TurnSignalsColor);
                 stripRightRear.SetPixelColor(i, TurnSignalsColor);
             }
+
+            digitalWrite(a_TURNINDICATOR, HIGH);
 
         }
     }
@@ -414,6 +437,8 @@ void WarningAnimation(const AnimationParam& _param){
                 stripLeftFront.SetPixelColor(i, RgbColor(0,0,0));
                 stripLeftRear.SetPixelColor(11-i, RgbColor(0,0,0));
             }
+
+            digitalWrite(a_TURNINDICATOR, HIGH);
             
         } else if (_param.progress < 0.666666f) {
 
@@ -421,6 +446,8 @@ void WarningAnimation(const AnimationParam& _param){
             stripRightRear.ClearTo(RgbColor(0,0,0));
             stripLeftFront.ClearTo(RgbColor(0,0,0));
             stripLeftRear.ClearTo(RgbColor(0,0,0));
+
+            digitalWrite(a_TURNINDICATOR, LOW);
 
         } else if (_param.progress < 0.999999f) {
 
@@ -431,6 +458,8 @@ void WarningAnimation(const AnimationParam& _param){
                 stripLeftFront.SetPixelColor(i, TurnSignalsColor);
                 stripLeftRear.SetPixelColor(11-i, TurnSignalsColor);
             }
+
+            digitalWrite(a_TURNINDICATOR, HIGH);
 
         }
     }

@@ -32,7 +32,7 @@ int Na[] = {0, 500, 800, 2000, 4200, 10000, 0};//t/*mn vilo
 //int Anga[] = {0, 1 , 8 , 10  , 12,    14,  16,    22,  24,   24,   25,    26,   28,   28, 0};
 int Anga[] = {0, 10 , 10, 10, 38, 38, 0};
 int Ncyl = 1;           //Nombre de cylindres, moteur 4 temps.Multiplier par 2 pour moteur 2 temps
-const int AngleCapteur = 64; //Position en degrès avant le PMH du capteur(Hall ou autre ).
+const int AngleCapteur = 113; //Position en degrès avant le PMH du capteur(Hall ou autre ).
 const int CaptOn = 0;  //CapteurOn = 1 déclenchement sur front montant (par ex. capteur Hall "saturé")
 //CapteurOn = 0 déclenchement sur front descendant (par ex. capteur Hall "non saturé").Voir fin du listing
 const int Dwell = 3;
@@ -68,7 +68,7 @@ const int N_multi = 2000; //t/mn pour 4 cylindres par exemple
 //*******************MULTICOURBES****IF FAUT METTRE D8 ou D9 A LA MASSE!!!!!!!*******
 //A la place de la courbe a, on peut selectionner la courbe b (D8 à la masse)ou la c (D9 à la masse)
 //*******//*********Courbe   b
-int Nb[] = {0, 500,  3400, 0};   //Connecter D8 à la masse
+int Nb[] = {0, 500,  5400, 0};   //Connecter D8 à la masse
 int Angb[] = {0, 10,  10,   0};
 //*******//*********Courbe   c
 int Nc[] = {0,  500, 9000,  0};    //Connecter D9 à la masse
@@ -333,10 +333,11 @@ void loop()   ////////////////
   }
   if (T > Tlim)     //Sous la ligne rouge?
   { CalcD(); // Top();  //Oui, generer une etincelle
-    SetFlashOn(); // <-- FLASH ON
+    //SetFlashOn(); // <-- FLASH ON
     Etincelle();
   }
-  SetFlashOff(); // <-- FLASH OFF
+  Serial.println(NTa / T, 1);
+  //SetFlashOff(); // <-- FLASH OFF
   while (digitalRead(Cible) == CaptOn); //Attendre si la cible encore active
 }
 /////////////////Exemples de CAPTEURS/////////////////
