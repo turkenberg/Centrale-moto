@@ -9,7 +9,7 @@ import numpy as np
 ser = serial.Serial('/dev/rfcomm0', 9600, timeout = 0)
 ser.flushInput()
 
-serBuffer = ""
+serBuffer = ''
 isOpen = 1
 
 plot_window = 20
