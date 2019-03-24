@@ -30,16 +30,17 @@ while True:
             isOpen == 1         # re-open buffer
 
         if isOpen == 1:
-            serBuffer += c  # add char to buffer if open
-
-        if len(serBuffer) == 4: # buffer is full --> PRINT
-            isOpen == 0     # close buffer until newl ine
-            print(serBuffer)
-            y_var = np.append(y_var,float(serBuffer))
-            y_var = y_var[1:plot_window+1]
-            line.set_ydata(y_var)
-            ax.relim()
-            ax.autoscale_view()
-            fig.canvas.draw()
-            fig.canvas.flush_events()
-            serBuffer = "" #empty buffer (to be filled until newline)
+            if c == ' ': # PRINT instruction AND opened ; open resets at NL
+                isOpen == 0     # close buffer until newl ine
+                print(serBuffer & '.')
+                y_float = float(serBuffer)
+                y_var = np.append(y_var, y_float)
+                y_var = y_var[1:plot_window+1]
+                line.set_ydata(y_var)
+                ax.relim()
+                ax.autoscale_view()
+                fig.canvas.draw()
+                fig.canvas.flush_events()
+                serBuffer = "" #empty buffer (to be filled until newline)
+            else:
+                serBuffer += c  # add char to buffer if open
