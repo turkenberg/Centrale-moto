@@ -36,11 +36,10 @@ while True:
                 ax.autoscale_view()
                 fig.canvas.draw()
                 fig.canvas.flush_events()
-                serBuffer = "" #empty buffer (to be filled until newline)
-                isOpen == 0     # close buffer until newline
+                serBuffer = '' #empty buffer (to be filled until newline)
+                isOpen = 0     # close buffer until newline
             else:
                 serBuffer += c  # add char to buffer if open
 
         if c == '\n':           # received new line ?
-            isOpen == 1         # re-open buffer
-            serBuffer = ""
+            isOpen = 1         # re-open buffer
