@@ -4,7 +4,7 @@
 #include <FastLED.h>
 #pragma endregion
 
-#define SERIALTYPE Serial // BT (bluetooth) or Serial (USB)
+#define SERIALTYPE BT // BT (bluetooth) or Serial (USB)
 char ver[] = "Version du 24_03_19";
 
 #pragma region Paramètres allumage
