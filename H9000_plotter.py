@@ -18,9 +18,14 @@ line, = ax.plot(y_var)
 
 while True:
     try:
-        ser_bytes = ser.readline()
+        c = ser.readline() # attempt to read a character from Serial
+        
+        #was anything read?
+        if len(c) == 0:
+            break  
+
         try:
-            decoded_bytes = float(ser_bytes[0:len(ser_bytes)-2].decode("utf-8"))
+            decoded_bytes = float(c[0:4].decode("utf-8")) # on prend les 4 premiers caractères de chaque ligne
             print(decoded_bytes)
         except:
             continue
