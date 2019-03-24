@@ -30,7 +30,7 @@ while True:
             isOpen == 1         # re-open buffer
 
         if isOpen == 1:
-            if c == ' ': # PRINT instruction AND opened ; open resets at NL
+            if c == '\t': # PRINT instruction AND opened ; open resets at NL
                 isOpen == 0     # close buffer until newl ine
                 print(serBuffer + '.')
                 y_float = float(serBuffer)
