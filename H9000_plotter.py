@@ -6,7 +6,7 @@ matplotlib.use("tkAgg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-ser = serial.Serial('/dev/rfcomm0', timeout = )
+ser = serial.Serial('/dev/rfcomm0')
 ser.flushInput()
 
 global serBuffer
