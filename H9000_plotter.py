@@ -6,7 +6,7 @@ matplotlib.use("tkAgg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-ser = serial.Serial('/dev/rfcomm0')
+ser = serial.Serial('/dev/rfcomm0', 9600, timeout = 0)
 ser.flushInput()
 
 serBuffer = ""
@@ -47,3 +47,8 @@ def readSerial():
                 isOpen == 1         # re-open buffer
                 serBuffer = ""
     root.after(10, readSerial)
+
+# after initializing serial, an arduino may need a bit of time to reset
+root.after(100, readSerial)
+
+app.mainloop()
