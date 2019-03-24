@@ -9,7 +9,6 @@ import numpy as np
 ser = serial.Serial('/dev/rfcomm0')
 ser.flushInput()
 
-global serBuffer
 isOpen = 1
 
 plot_window = 20
@@ -21,6 +20,8 @@ line, = ax.plot(y_var)
 
 while True:
         c = ser.read() # attempt to read a character from Serial
+
+        global serBuffer
 
         #was anything read?
         if len(c) == 0:         # nothing read
