@@ -35,6 +35,7 @@ while True:
 
         if len(serBuffer) == 4: # buffer is full --> PRINT
             isOpen == 0     # close buffer until newl ine
+            print(serBuffer)
             y_var = np.append(y_var,decoded_bytes)
             y_var = y_var[1:plot_window+1]
             line.set_ydata(y_var)
@@ -43,12 +44,6 @@ while True:
             fig.canvas.draw()
             fig.canvas.flush_events()
             serBuffer = "" #empty buffer (to be filled until newline)
-        try:
-            if len(serBuffer) == 4:
-            decoded_bytes = float(serBuffer.decode("utf-8")) # 4 premiers caractères de chaque ligne
-            print(decoded_bytes)
-        except:
-            continue
     except:
         print("Keyboard Interrupt")
         break
