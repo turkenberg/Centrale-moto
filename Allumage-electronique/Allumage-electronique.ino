@@ -4,6 +4,7 @@
 #include <FastLED.h>
 #pragma endregion
 
+#define SERIALTYPE Serial // BT (bluetooth) or Serial (USB)
 char ver[] = "Version du 24_03_19";
 
 #pragma region Paramètres allumage
@@ -226,14 +227,14 @@ void  Etincelle ()//////////
     // Puis ajouter la fin de jauge
     // EXEMPLE : 
     
-    BT.print(NTa / T, 1);  //Afficher N et avance sur smart
-    BT.print('\t');
-    BT.print('\t');
-    BT.print(int(AngleCapteur - (D + tcor)*AngleCibles / T));
-    BT.print('\t');
-    BT.print('\t');
+    SERIALTYPE.print(NTa / T, 1);  //Afficher N et avance sur smart
+    SERIALTYPE.print('\t');
+    SERIALTYPE.print('\t');
+    SERIALTYPE.print(int(AngleCapteur - (D + tcor)*AngleCibles / T));
+    SERIALTYPE.print('\t');
+    SERIALTYPE.print('\t');
     JaugeSerial();
-    BT.print('\n'); // fin de ligne
+    SERIALTYPE.print('\n'); // fin de ligne
   }
 
   Tst_Pot();//Voir si un potard connecté pour deplacer la courbe ou selectionner une autre courbe
@@ -284,11 +285,11 @@ void  Init ()/////////////
   }
   j_lim = i - 1; //Revenir au dernier couple entré
   Tlim  = Tc[j_lim]; //Ligne rouge
-  BT.print("Ligne_"); BT.print(__LINE__); BT.print('\n');
-  BT.print("Tc = "); BT.print('\n'); for (i = 1 ; i < 15; i++) {BT.print(Tc[i]);BT.print('\n');} 
-  BT.print("Nlim = "); BT.print(NT/Tlim); BT.print('\n');
-  BT.print("C1 = "); BT.print('\n'); for (i = 1 ; i < 15; i++) {BT.print(C1[i]);BT.print('\n');}
-  BT.print("C2 = "); BT.print('\n'); for (i = 1 ; i < 15; i++) {BT.print(C2[i]);BT.print('\n');}
+  SERIALTYPE.print("Ligne_"); SERIALTYPE.print(__LINE__); SERIALTYPE.print('\n');
+  SERIALTYPE.print("Tc = "); SERIALTYPE.print('\n'); for (i = 1 ; i < 15; i++) {SERIALTYPE.print(Tc[i]);SERIALTYPE.print('\n');} 
+  SERIALTYPE.print("Nlim = "); SERIALTYPE.print(NT/Tlim); SERIALTYPE.print('\n');
+  SERIALTYPE.print("C1 = "); SERIALTYPE.print('\n'); for (i = 1 ; i < 15; i++) {SERIALTYPE.print(C1[i]);SERIALTYPE.print('\n');}
+  SERIALTYPE.print("C2 = "); SERIALTYPE.print('\n'); for (i = 1 ; i < 15; i++) {SERIALTYPE.print(C2[i]);SERIALTYPE.print('\n');}
   //Timer1 a deux roles:
   //1)couper le courant dans la bobine en l'absence d'etincelle pendant plus de Dsecu µs
   //2)après une étincelle, attendre le delais Drech avant de retablir le courant dans la bobine
@@ -301,24 +302,24 @@ void  Init ()/////////////
   digitalWrite(Led13, 0); //Temoin
 #pragma endregion
 #pragma region ecran accueil
-    BT.print("            r==");                        BT.print('\n');
-    BT.print("        _  //");                          BT.print('\n');
-    BT.print("       |_)//(''''''-.");                  BT.print('\n');
-    BT.print("         //  \\_____:_____.-----.P");     BT.print('\n');
-    BT.print("        //   | ===  |   /        \\");    BT.print('\n');
-    BT.print("    .:'//.   \\ \\=|   \\ /  .:'':.");    BT.print('\n');
-    BT.print("   :' // ':   \\ \\ ''..'--:'-.. ':");    BT.print('\n');
-    BT.print("   '. '' .'    \\.....:--'.-'' .'");      BT.print('\n');
-    BT.print("    ':..:'                ':..:'");       BT.print('\n');
-  BT.println("B i e n v e n u e   s u r   H 9 0 0 0");
+    SERIALTYPE.print("            r==");                        SERIALTYPE.print('\n');
+    SERIALTYPE.print("        _  //");                          SERIALTYPE.print('\n');
+    SERIALTYPE.print("       |_)//(''''''-.");                  SERIALTYPE.print('\n');
+    SERIALTYPE.print("         //  \\_____:_____.-----.P");     SERIALTYPE.print('\n');
+    SERIALTYPE.print("        //   | ===  |   /        \\");    SERIALTYPE.print('\n');
+    SERIALTYPE.print("    .:'//.   \\ \\=|   \\ /  .:'':.");    SERIALTYPE.print('\n');
+    SERIALTYPE.print("   :' // ':   \\ \\ ''..'--:'-.. ':");    SERIALTYPE.print('\n');
+    SERIALTYPE.print("   '. '' .'    \\.....:--'.-'' .'");      SERIALTYPE.print('\n');
+    SERIALTYPE.print("    ':..:'                ':..:'");       SERIALTYPE.print('\n');
+  SERIALTYPE.println("B i e n v e n u e   s u r   H 9 0 0 0");
 
-    BT.print("  Nombre cylindres"); BT.print('\t'); BT.print(Ncyl); BT.print('\n');
-    BT.print("  Angle avant PMH"); BT.print('\t'); BT.print(AngleCapteur); BT.print(" deg"); BT.print('\n');
-    BT.print("  Regime demarrage"); BT.print('\t'); BT.print(Ndem); BT.print(" tr/min"); BT.print('\n');
-    BT.print("  Cartographie"); BT.print('\t'); BT.print('\t'); BT.print(courbe_selection); BT.print('\n');
-    BT.print("  Regime maxi"); BT.print('\t'); BT.print('\t'); BT.print(NT/Tlim); BT.print(" tr/min"); BT.print('\n');
-    BT.print("  Avance maxi"); BT.print('\t'); BT.print('\t'); BT.print(Dlim); BT.print(" deg"); BT.print('\n');
-    BT.print('\t'); BT.print('\t'); BT.print('\t'); BT.print('\t'); BT.println("  PRET  ");
+    SERIALTYPE.print("  Nombre cylindres"); SERIALTYPE.print('\t');                 SERIALTYPE.print(Ncyl);                                     SERIALTYPE.print('\n');
+    SERIALTYPE.print("  Angle avant PMH");  SERIALTYPE.print('\t');                 SERIALTYPE.print(AngleCapteur);     SERIALTYPE.print(" deg");       SERIALTYPE.print('\n');
+    SERIALTYPE.print("  Regime demarrage"); SERIALTYPE.print('\t');                 SERIALTYPE.print(Ndem);             SERIALTYPE.print(" tr/min");    SERIALTYPE.print('\n');
+    SERIALTYPE.print("  Cartographie");     SERIALTYPE.print('\t');SERIALTYPE.print('\t');  SERIALTYPE.print(courbe_selection);                         SERIALTYPE.print('\n');
+    SERIALTYPE.print("  Regime maxi");      SERIALTYPE.print('\t');SERIALTYPE.print('\t');  SERIALTYPE.print(NT/Tlim);          SERIALTYPE.print(" tr/min");    SERIALTYPE.print('\n');
+    SERIALTYPE.print("  Avance maxi");      SERIALTYPE.print('\t');SERIALTYPE.print('\t');  SERIALTYPE.print(Dlim);             SERIALTYPE.print(" deg");       SERIALTYPE.print('\n');
+    SERIALTYPE.print("  Version");          SERIALTYPE.print('\t');SERIALTYPE.print('\t');  SERIALTYPE.print(ver);              SERIALTYPE.print("      PRET"); SERIALTYPE.print('\n');
 }
 #pragma endregion
 #pragma region couper courant bobine
@@ -473,11 +474,11 @@ void JaugeSerial(){
     Jauge_limite_index = static_cast<int>(limite);
 
     for (j=0; j<=nombre_jauge_char; j++){
-        if (j <= Jauge_active_index)         BT.print(curseur); // plein
-        else if (j < Jauge_limite_index)     BT.print(vide);
-        else if (j == Jauge_limite_index)    BT.print(ligne_rouge);
-        else if (j < nombre_jauge_char)      BT.print(zonerouge);
-        else if (j == nombre_jauge_char)     BT.print(fin_de_jauge);  // risk of out of range ?                            
+        if (j <= Jauge_active_index)         SERIALTYPE.print(curseur); // plein
+        else if (j < Jauge_limite_index)     SERIALTYPE.print(vide);
+        else if (j == Jauge_limite_index)    SERIALTYPE.print(ligne_rouge);
+        else if (j < nombre_jauge_char)      SERIALTYPE.print(zonerouge);
+        else if (j == nombre_jauge_char)     SERIALTYPE.print(fin_de_jauge);  // risk of out of range ?                            
     }
 
 }
