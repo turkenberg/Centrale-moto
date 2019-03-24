@@ -12,7 +12,7 @@ ser.flushInput()
 serBuffer = ""
 isOpen = 1
 
-plot_window = 10
+plot_window = 20
 y_var = np.array(np.zeros([plot_window]))
 
 plt.ion()
@@ -28,9 +28,8 @@ while True:
 
         if isOpen == 1:
             if c == '\t': # PRINT instruction AND opened ; open resets at NL
-                print(serBuffer + '.')
-                y_float = float(serBuffer)
-                y_var = np.append(y_var, y_float)
+                print(serBuffer + '.') 
+                y_var = np.append(y_var, float(serBuffer))
                 y_var = y_var[1:plot_window+1]
                 line.set_ydata(y_var)
                 ax.relim()
