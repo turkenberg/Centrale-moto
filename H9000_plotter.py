@@ -32,7 +32,7 @@ while True:
         if isOpen == 1:
             if c == ' ': # PRINT instruction AND opened ; open resets at NL
                 isOpen == 0     # close buffer until newl ine
-                print(serBuffer & '.')
+                print(serBuffer + '.')
                 y_float = float(serBuffer)
                 y_var = np.append(y_var, y_float)
                 y_var = y_var[1:plot_window+1]
