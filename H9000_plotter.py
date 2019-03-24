@@ -39,7 +39,6 @@ while True:
                 fig.canvas.flush_events()
                 serBuffer = "" #empty buffer (to be filled until newline)
                 isOpen == 0     # close buffer until newline
-                break
             else:
                 serBuffer += c  # add char to buffer if open
 
