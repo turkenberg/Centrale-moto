@@ -42,6 +42,9 @@ while True:
                 break
             else:
                 serBuffer += c  # add char to buffer if open
+                break
 
         if c == '\n':           # received new line ?
             isOpen == 1         # re-open buffer
+            serBuffer = ""
+            break
