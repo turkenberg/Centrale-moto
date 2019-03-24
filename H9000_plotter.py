@@ -20,7 +20,6 @@ fig, ax = plt.subplots()
 line, = ax.plot(y_var)
 
 while True:
-    try:
         c = ser.read() # attempt to read a character from Serial
 
         #was anything read?
@@ -44,6 +43,3 @@ while True:
             fig.canvas.draw()
             fig.canvas.flush_events()
             serBuffer = "" #empty buffer (to be filled until newline)
-    except:
-        print("Keyboard Interrupt")
-        break
