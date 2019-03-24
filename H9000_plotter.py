@@ -25,9 +25,6 @@ while True:
         #was anything read?
         if len(c) == 0:         # nothing read
             break  
-        
-        if c == '\n':           # received new line ?
-            isOpen == 1         # re-open buffer
 
         if isOpen == 1:
             if c == '\t': # PRINT instruction AND opened ; open resets at NL
@@ -44,3 +41,6 @@ while True:
                 serBuffer = "" #empty buffer (to be filled until newline)
             else:
                 serBuffer += c  # add char to buffer if open
+
+        if c == '\n':           # received new line ?
+            isOpen == 1         # re-open buffer
