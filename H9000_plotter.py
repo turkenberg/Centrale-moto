@@ -28,7 +28,6 @@ while True:
 
         if isOpen == 1:
             if c == '\t': # PRINT instruction AND opened ; open resets at NL
-                isOpen == 0     # close buffer until newl ine
                 print(serBuffer + '.')
                 y_float = float(serBuffer)
                 y_var = np.append(y_var, y_float)
@@ -39,6 +38,8 @@ while True:
                 fig.canvas.draw()
                 fig.canvas.flush_events()
                 serBuffer = "" #empty buffer (to be filled until newline)
+                isOpen == 0     # close buffer until newline
+                break
             else:
                 serBuffer += c  # add char to buffer if open
 
