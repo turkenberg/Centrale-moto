@@ -1,25 +1,12 @@
-//Aepl-Duino_11_10_18****************************************************
-//Aepl-Duino  Allumage electronique programmable - Arduino Nano et compatibles
-//Si un module Bluetooth type HC05/06 est connecté sur l'Arduino (3 fils suffisent, voir ci desous)
-//on affiche sur smartphone(ou tablette)Android  le régime (t/mn /10)et l'avance en degrès
-//Surtout utile comme compte-tours precis pour regler la carburation au ralenti
-//**************************************************************
+#pragma region Libraries
 #include "TimerOne.h"
 #include <SoftwareSerial.h>
 #include <FastLED.h>
+#pragma endregion
 
-// Flashing W2812b stuff:
-#define NUM_LEDS 10
-// For led chips like Neopixels, which have a data line, ground, and power, you just
-// need to define DATA_PIN.  For led chipsets that are SPI based (four wires - data, clock,
-// ground, and power), like the LPD8806 define both DATA_PIN and CLOCK_PIN
-#define DATA_PIN 6
-// Define the array of leds
-CRGB leds[NUM_LEDS];
-// End of flashing stuff
+char ver[] = "Version du 24_03_19";
 
-char ver[] = "Version du 11_10_18";
-
+#pragma region Paramètres allumage
 //******************************************************************************
 //**************  Seulement  6 lignes à renseigner obligatoirement.****************
 //**********Ce sont:  Na  Anga  Ncyl  AngleCapteur  CaptOn  Dwell******************
@@ -36,26 +23,31 @@ const int AngleCapteur = 113; //Position en degrès avant le PMH du capteur(Hall
 const int CaptOn = 0;  //CapteurOn = 1 déclenchement sur front montant (par ex. capteur Hall "saturé")
 //CapteurOn = 0 déclenchement sur front descendant (par ex. capteur Hall "non saturé").Voir fin du listing
 const int Dwell = 3;
-//Dwell = 1 pour alimenter la bobine en permanence sauf 1ms/cycle.Elle doit pouvoir chauffer sans crainte
-//Dwell = 2 pour alimentation de la bobine seulement trech ms par cycle, 3ms par exemple
-//Obligatoire pour bobine 'electronique'   de faible resistance: entre 2 et 0.5ohm.Ajuster  trech
-//Dwell = 3 pour simuler un allumage à vis platinées: bobine alimentée 2/3 (66%) du cycle
-//Dwell = 4 pour optimiser l'étincelle à haut régime.La bobine chauffe un peu plus.
-//************************************************************************************
-//******************************************************************************
+char courbe_selection = 'A';
+#pragma endregion
+#pragma region explications allumage
+/**Dwell = 1 pour alimenter la bobine en permanence sauf 1ms/cycle.Elle doit pouvoir chauffer sans crainte
+Dwell = 2 pour alimentation de la bobine seulement trech ms par cycle, 3ms par exemple
+Obligatoire pour bobine 'electronique'   de faible resistance: entre 2 et 0.5ohm.Ajuster  trech
+Dwell = 3 pour simuler un allumage à vis platinées: bobine alimentée 2/3 (66%) du cycle
+Dwell = 4 pour optimiser l'étincelle à haut régime.La bobine chauffe un peu plus.
+************************************************************************************
+******************************************************************************
 
-//Valable pour tout type de capteur soit sur vilo soit dans l'allumeur (ou sur l'arbre à came)
-//La Led(D13) existant sur tout Arduino suit le courant dans la bobine
-//En option, multi-étincelles à bas régime pour denoyer les bougies
-//En option, connexion d'un potard de 100kohm enter la patte A0 et la masse
-//pour decaler "au vol" la courbe de quelques degrés, voir delAv plus bas
-//En option,multi courbes , 2 courbes supplementaires, b et c, selectionables par D8 ou D
-//Pour N cylindres,2,4,6,8,12,16, 4 temps, on a N cames d'allumeur ou  N/2 cibles sur le vilo
-//Pour les moteurs à 1, 3 ou 5 cylindres, 4 temps, il FAUT un capteur dans l'allumeur (ou sur
-//l'arbre à cames, c'est la même chose)
-//Exception possible pour un monocylindre 4 temps, avec  capteur sur vilo et une cible:on peut génèrer
-//une étincelle perdue au Point Mort Bas en utilisant la valeur Ncyl =2.
-//Avance 0°jusqu'a Nplancher t/mn, anti retour de kick.
+Valable pour tout type de capteur soit sur vilo soit dans l'allumeur (ou sur l'arbre à came)
+La Led(D13) existant sur tout Arduino suit le courant dans la bobine
+En option, multi-étincelles à bas régime pour denoyer les bougies
+En option, connexion d'un potard de 100kohm enter la patte A0 et la masse
+pour decaler "au vol" la courbe de quelques degrés, voir delAv plus bas
+En option,multi courbes , 2 courbes supplementaires, b et c, selectionables par D8 ou D
+Pour N cylindres,2,4,6,8,12,16, 4 temps, on a N cames d'allumeur ou  N/2 cibles sur le vilo
+Pour les moteurs à 1, 3 ou 5 cylindres, 4 temps, il FAUT un capteur dans l'allumeur (ou sur
+l'arbre à cames, c'est la même chose)
+Exception possible pour un monocylindre 4 temps, avec  capteur sur vilo et une cible:on peut génèrer
+une étincelle perdue au Point Mort Bas en utilisant la valeur Ncyl =2.
+Avance 0°jusqu'a Nplancher t/mn, anti retour de kick.*/
+#pragma endregion
+#pragma region Options allumage
 //**********************LES OPTIONS**********************
 //Si Dwell=2, temps de recharge bobine, 3ms= 3000µs typique, 7ms certaines motos
 const int trech  = 3000;
@@ -84,6 +76,8 @@ int delAv = 2;//delta avance,par ex 2°. Quand Pot avance d'une position, l'avan
 //de 1 a 2V environ avance augmentée de delAv, au dela de 2V, augmentée de 2*delAv
 //Attention.....Pas de pleine charge avec trop d'avance, danger pour les pistons..
 //*****************************************************************************
+#pragma endregion
+#pragma region Bluetooth
 //*********************Compte-tours sensible************************
 SoftwareSerial BT(10, 11);//Ceci est une option pour compte-tours en Bluetooth
 //                     D11 Arduino vers  RX du module BlueTooth HC05/06
@@ -93,7 +87,38 @@ SoftwareSerial BT(10, 11);//Ceci est une option pour compte-tours en Bluetooth
 //Sur le smartphon installer une appli telle que "Bluetooth Terminal HC-05"
 //ou encore "BlueTerm+" ou equivallent.Inscrire le module sur le smartphone
 //avec le code pin 1234, la première fois seulement.
-
+#pragma endregion
+#pragma region Paramètres de jauge graphique pocketchip
+//Jauge sur le port série : variables
+String curseur = "=";         // fill
+String vide = " ";
+String zonerouge = ".";
+String ligne_rouge = "[";     // ligne rouge
+String fin_de_jauge = "]";    // fin de jauge
+// ****** UTF8-Decoder: convert UTF8-string to extended ASCII *******
+static byte c1;  // Last character buffer
+int nombre_jauge_char = 30;   // Nombre de caractères pour afficher la jauge
+int unsigned long plage_jauge_N = 11000;  // Régime max de la jauge
+char jauge[]="=============            [...]";               // Contient la jauge sous forme de caractères (PIXEL + MARGE DE 5)
+int Jauge_active_index; // index à partir duquel il y a remplissage
+int Jauge_limite_index; // index à partir duquel c'est la ligne rouge
+int j; //index de jauge
+float active; // index de jauge régime moteur
+float limite; // index de ligne rouge moteur
+// Fin de jauge
+#pragma endregion
+#pragma region Lampe strobo
+// Flashing W2812b stuff:
+#define NUM_LEDS 10
+// For led chips like Neopixels, which have a data line, ground, and power, you just
+// need to define DATA_PIN.  For led chipsets that are SPI based (four wires - data, clock,
+// ground, and power), like the LPD8806 define both DATA_PIN and CLOCK_PIN
+#define DATA_PIN 6
+// Define the array of leds
+CRGB leds[NUM_LEDS];
+// End of flashing stuff
+#pragma endregion
+#pragma region Calcul
 //***********************Variables du sketch************************************
 const int Bob = 12;    //Sortie D4 vers bobine.En option, on peut connecter une Led avec R=330ohms vers la masse
 const int Cible = 2;  //Entrée sur D2 du capteur, R PullUp
@@ -121,11 +146,12 @@ int Ang2  = 0;
 int*  pN = &Na[0];//pointeur au tableau des régimes. Na sera la courbe par defaut
 int*  pA = &Anga[0];//pointeur au tableau des avances. Anga sera la  courbe par defaut
 float k = 0;//Constante pour calcul de C1 et C2
-float C1[30]; //Tableaux des constantes de calcul de l'avance courante
-float C2[30]; //Tableaux des constantes de calcul de l'avance courante
-float Tc[30]; //Tableau des Ti correspondants au Ni
+float C1[15]; //Tableaux des constantes de calcul de l'avance courante
+float C2[15]; //Tableaux des constantes de calcul de l'avance courante
+float Tc[15]; //Tableau des Ti correspondants au Ni
 //Si necessaire, augmenter ces 3 valeurs:Ex C1[40],C2[40],Tc[40]
 int Tlim  = 0;  //Période minimale, limite, pour la ligne rouge
+int Dlim = 0; //Avance maximale
 int j_lim = 0;  //index maxi des N , donc aussi  Ang
 int unsigned long NT  = 0;//Facteur de conversion entre N et T à Ncyl donné
 int unsigned long NTa  = 0;//Facteur de conversion entre N et T pour affichage sur smartphone
@@ -137,7 +163,8 @@ int Mot_OFF = 0;//Sera 1 si moteur detecté arrété par l'isr_GestionIbob()
 int unsigned long Ttrans; //T transition de Dwell 4
 int unsigned long T_multi  = 0;  //Periode minimale pour multi-étincelle
 //Permet d'identifier le premier front et forcer T=Tdem, ainsi que Ibob=1, pour demarrer au premier front
-
+#pragma endregion
+#pragma region Fonctions
 //********************LES FONCTIONS*************************
 
 void  CalcD ()//////////////////
@@ -193,12 +220,20 @@ void  Etincelle ()//////////
   }
   //  Pour Dwell=4 uniquement, tant que N < Ntrans (Dwell4 ou non) on affiche en Bluetooth le regime et l'avance
   if ((Dwell != 4) || (T > Ttrans)) {
-    BT.println(NTa / T, 1);  //Afficher N et avance sur smart
-    //Serial.print("\t");
-    //Serial.print("\t");
-    //Serial.print("\t");
-    BT.println(45 - (D + tcor)*AngleCibles / T);
-    //Serial.println(NTa / T, 1);
+    // Trouver progession de la jauge série
+    // On va y ajouter le nombre de "curseur" ; puis compléter avec des " " ;
+    // Puis compléter jusqu'à la ligne rouge
+    // Puis ajouter la fin de jauge
+    // EXEMPLE : 
+    
+    BT.print(NTa / T, 1);  //Afficher N et avance sur smart
+    BT.print('\t');
+    BT.print('\t');
+    BT.print(int(AngleCapteur - (D + tcor)*AngleCibles / T));
+    BT.print('\t');
+    BT.print('\t');
+    JaugeSerial();
+    BT.print('\n'); // fin de ligne
   }
 
   Tst_Pot();//Voir si un potard connecté pour deplacer la courbe ou selectionner une autre courbe
@@ -218,14 +253,14 @@ void  Genere_multi()//////////
   digitalWrite(Bob, 1);//Retablir  le courant pour étincelle principale
 }
 void  Init ()/////////////
-//Calcul de 3 tableaux,C1,C2 et Tc qui serviront à calculer D, temps d'attente
+{//Calcul de 3 tableaux,C1,C2 et Tc qui serviront à calculer D, temps d'attente
 //entre la detection d'une cible par le capteur  et la generation de l'etincelle.
 //Le couple C1,C2 est determiné par la periode T entre deux cibles, correspondant au
 //bon segment de la courbe d'avance entrée par l'utilisateur: T est comparée à Tc
-{ AngleCibles = 720 / Ncyl; //Cibles sur vilo.Ex pour 4 cylindres 180°,  120° pour 6 cylindres
+  AngleCibles = 720 / Ncyl; //Cibles sur vilo.Ex pour 4 cylindres 180°,  120° pour 6 cylindres
   NT  = 120000000 / Ncyl; //Facteur de conversion Nt/mn moteur, Tµs entre deux PMH étincelle
   //c'est à dire deux cibles sur vilo ou deux cames d'allumeur
-  NTa = NT / 10; // Pour afficher N/10 au smartphone
+  NTa = NT ;// "/ 10"// Pour afficher N au smartphone (anciennement N/10)
   Ttrans = NT / Ntrans; //Calcul de la periode de transition pour Dwell 4
   T_multi = NT / N_multi; //Periode minimale pour generer un train d'étincelle
   //T temps entre 2 étincelle soit 720°  1°=1/6N
@@ -245,14 +280,15 @@ void  Init ()/////////////
     Tc[i] = float(NT / N2);  //
     N1 = N2; Ang1 = Ang2; //fin de ce segment, début du suivant
     pN++; pA++;   //Pointer à l'element suivant de chaque tableau
+    if (Ang2>Dlim) Dlim = Ang2; // Mémoriser la valeur max
   }
   j_lim = i - 1; //Revenir au dernier couple entré
   Tlim  = Tc[j_lim]; //Ligne rouge
-  Serial.print("Ligne_"); Serial.println(__LINE__);
-  Serial.print("Tc = "); for (i = 1 ; i < 15; i++)Serial.println(Tc[i]);
-  Serial.print("Tlim = "); Serial.println(Tlim);
-  Serial.print("C1 = "); for (i = 1 ; i < 15; i++)Serial.println(C1[i]);
-  Serial.print("C2 = "); for (i = 1 ; i < 15; i++)Serial.println(C2[i]);
+  BT.print("Ligne_"); BT.print(__LINE__); BT.print('\n');
+  BT.print("Tc = "); BT.print('\n'); for (i = 1 ; i < 15; i++) {BT.print(Tc[i]);BT.print('\n');} 
+  BT.print("Nlim = "); BT.print(NT/Tlim); BT.print('\n');
+  BT.print("C1 = "); BT.print('\n'); for (i = 1 ; i < 15; i++) {BT.print(C1[i]);BT.print('\n');}
+  BT.print("C2 = "); BT.print('\n'); for (i = 1 ; i < 15; i++) {BT.print(C2[i]);BT.print('\n');}
   //Timer1 a deux roles:
   //1)couper le courant dans la bobine en l'absence d'etincelle pendant plus de Dsecu µs
   //2)après une étincelle, attendre le delais Drech avant de retablir le courant dans la bobine
@@ -263,11 +299,29 @@ void  Init ()/////////////
   Mot_OFF = 1;// Signalera à loop() le premier front
   digitalWrite(Bob, 0); //par principe, couper la bobine
   digitalWrite(Led13, 0); //Temoin
+#pragma endregion
+#pragma region ecran accueil
+    BT.print("            r==");                        BT.print('\n');
+    BT.print("        _  //");                          BT.print('\n');
+    BT.print("       |_)//(''''''-.");                  BT.print('\n');
+    BT.print("         //  \\_____:_____.-----.P");     BT.print('\n');
+    BT.print("        //   | ===  |   /        \\");    BT.print('\n');
+    BT.print("    .:'//.   \\ \\=|   \\ /  .:'':.");    BT.print('\n');
+    BT.print("   :' // ':   \\ \\ ''..'--:'-.. ':");    BT.print('\n');
+    BT.print("   '. '' .'    \\.....:--'.-'' .'");      BT.print('\n');
+    BT.print("    ':..:'                ':..:'");       BT.print('\n');
+  BT.println("B i e n v e n u e   s u r   H 9 0 0 0");
 
-// Test mode ?
-  
-
+    BT.print("  Nombre cylindres"); BT.print('\t'); BT.print(Ncyl); BT.print('\n');
+    BT.print("  Angle avant PMH"); BT.print('\t'); BT.print(AngleCapteur); BT.print(" deg"); BT.print('\n');
+    BT.print("  Regime demarrage"); BT.print('\t'); BT.print(Ndem); BT.print(" tr/min"); BT.print('\n');
+    BT.print("  Cartographie"); BT.print('\t'); BT.print('\t'); BT.print(courbe_selection); BT.print('\n');
+    BT.print("  Regime maxi"); BT.print('\t'); BT.print('\t'); BT.print(NT/Tlim); BT.print(" tr/min"); BT.print('\n');
+    BT.print("  Avance maxi"); BT.print('\t'); BT.print('\t'); BT.print(Dlim); BT.print(" deg"); BT.print('\n');
+    BT.print('\t'); BT.print('\t'); BT.print('\t'); BT.print('\t'); BT.println("  PRET  ");
 }
+#pragma endregion
+#pragma region couper courant bobine
 void  isr_GestionIbob()//////////
 { Timer1.stop();    //Arreter le decompte du timer
   if (UneEtin == 1) {
@@ -281,13 +335,17 @@ void  isr_GestionIbob()//////////
   UneEtin = 0;  //Remet  le detecteur d'étincelle à 0
   Timer1.initialize(Dsecu);//Au cas où le moteur s'arrete, couper la bobine apres Dsecu µs
 }
+#pragma endregion
+#pragma region curves manager et selecteur de courbe
 void  Select_Courbe()///////////
 //Par défaut, la courbe a est déja selectionnée
 { if (digitalRead(Courbe_b) == 0) {   //D8 à la masse
+    courbe_selection = 'B';
     pN = &Nb[0];  // pointer à la courbe b
     pA = &Angb[0];
   }
   if (digitalRead(Courbe_c) == 0) {    //D9 à la masse
+    courbe_selection = 'C';
     pN = &Nc[0];  // pointer à la courbe c
     pA = &Angc[0];
   }
@@ -296,17 +354,19 @@ void Tst_Pot()///////////
 { valPot = analogRead(Pot);
   if (valPot < 240 || valPot > 900)modC1 = 0;//0° ou pas de potard connecté (valpot =1023 en théorie)
   else {
-    if (valPot < 500)modC1 = float (delAv) / float(AngleCibles);//Position 1
+    if (valPot < 500) modC1 = float (delAv) / float(AngleCibles);//Position 1
     else modC1 = 2 * float (delAv) / float(AngleCibles);//Position 2
   }
 }
 ////////////////////////////////////////////////////////////////////////
+#pragma endregion
+#pragma region SETUP
 void setup()///////////////
 /////////////////////////////////////////////////////////////////////////
 { Serial.begin(9600);//Ligne suivante, 3 Macros du langage C
   Serial.println(__FILE__); Serial.println(__DATE__); Serial.println(__TIME__);
   Serial.println(ver);
-  BT.begin(115200);//Vers module BlueTooth HC05/06
+  BT.begin(38400);//Vers module BlueTooth HC05/06
   BT.flush();//A tout hasard
   pinMode(Cible, INPUT_PULLUP); //Entrée front du capteur sur D2
   pinMode(Bob, OUTPUT); //Sortie sur D4 controle du courant dans la bobine
@@ -320,6 +380,8 @@ void setup()///////////////
   InitFlashStuff();// Préparer le flash (optionnel)
 }
 ///////////////////////////////////////////////////////////////////////////
+#pragma endregion
+#pragma region LOOP
 void loop()   ////////////////
 ////////////////////////////////////////////////////////////////////////////
 { while (digitalRead(Cible) == !CaptOn); //Attendre front actif de la cible
@@ -333,13 +395,15 @@ void loop()   ////////////////
   }
   if (T > Tlim)     //Sous la ligne rouge?
   { CalcD(); // Top();  //Oui, generer une etincelle
-    //SetFlashOn(); // <-- FLASH ON
+    //    SetFlashOn(); // <-- FLASH ON
     Etincelle();
   }
-  Serial.println(NTa / T, 1);
-  //SetFlashOff(); // <-- FLASH OFF
+  //      Serial.println(NTa / T, 1);
+  //      SetFlashOff(); // <-- FLASH OFF
   while (digitalRead(Cible) == CaptOn); //Attendre si la cible encore active
 }
+#pragma endregion
+#pragma region exemple de capteur
 /////////////////Exemples de CAPTEURS/////////////////
 //Capteur Honeywell cylindrique 1GT101DC,contient un aimant sur le coté,type non saturé, sortie haute à vide,
 //et basse avec une cible en acier. Il faut  CapteurOn = 0, declenchement sur front descendant.
@@ -374,7 +438,8 @@ void loop()   ////////////////
 //{
 //  asm volatile ("  jmp 0");
 //}
-
+#pragma endregion
+#pragma region sandbox et helpers
 
 void InitFlashStuff(){
     FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
@@ -399,3 +464,23 @@ void SetFlashOff(){
     // Show the leds (only one of which is set to white, from above)
     FastLED.show();
 }
+
+void JaugeSerial(){
+
+    active = (float)(NT/T) * nombre_jauge_char / plage_jauge_N;
+    limite = (float)(NT/Tlim) * nombre_jauge_char / plage_jauge_N;
+    Jauge_active_index = static_cast<int>(active);
+    Jauge_limite_index = static_cast<int>(limite);
+
+    for (j=0; j<=nombre_jauge_char; j++){
+        if (j <= Jauge_active_index)         BT.print(curseur); // plein
+        else if (j < Jauge_limite_index)     BT.print(vide);
+        else if (j == Jauge_limite_index)    BT.print(ligne_rouge);
+        else if (j < nombre_jauge_char)      BT.print(zonerouge);
+        else if (j == nombre_jauge_char)     BT.print(fin_de_jauge);  // risk of out of range ?                            
+    }
+
+}
+
+//void(* resetFunc) (void) = 0; //declare reset function @ address 0
+#pragma endregion
