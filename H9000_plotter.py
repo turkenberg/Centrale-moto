@@ -35,7 +35,7 @@ while True:
         if len(serBuffer) == 4: # buffer is full --> PRINT
             isOpen == 0     # close buffer until newl ine
             print(serBuffer)
-            y_var = np.append(y_var,serBuffer)
+            y_var = np.append(y_var,float(serBuffer))
             y_var = y_var[1:plot_window+1]
             line.set_ydata(y_var)
             ax.relim()
