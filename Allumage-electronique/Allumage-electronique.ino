@@ -4,7 +4,7 @@
 #include <FastLED.h>
 #pragma endregion
 
-#define SERIALTYPE BT // BT (bluetooth) or Serial (USB)
+#define SERIALTYPE Serial // BT (bluetooth) or Serial (USB)
 char ver[] = "Version du 24_03_19";
 
 #pragma region Paramètres allumage
@@ -88,6 +88,9 @@ SoftwareSerial BT(10, 11);//Ceci est une option pour compte-tours en Bluetooth
 //Sur le smartphon installer une appli telle que "Bluetooth Terminal HC-05"
 //ou encore "BlueTerm+" ou equivallent.Inscrire le module sur le smartphone
 //avec le code pin 1234, la première fois seulement.
+unsigned long periodeAffichage = 200; // Intervale entre chaque affichage (ms)
+unsigned long elapsedAffichage = 0;
+unsigned long previousAffichage = 0;
 #pragma endregion
 #pragma region Paramètres de jauge graphique pocketchip
 //Jauge sur le port série : variables
@@ -219,8 +222,11 @@ void  Etincelle ()//////////
     }
     Timer1.initialize(Davant_rech);//Attendre Drech µs avant de retablire le courant dans la bobine
   }
+
+  elapsedAffichage = millis() - previousAffichage;
+
   //  Pour Dwell=4 uniquement, tant que N < Ntrans (Dwell4 ou non) on affiche en Bluetooth le regime et l'avance
-  if ((Dwell != 4) || (T > Ttrans)) {
+  if (((Dwell != 4) || (T > Ttrans)) && (elapsedAffichage > periodeAffichage) ) {
     // Trouver progession de la jauge série
     // On va y ajouter le nombre de "curseur" ; puis compléter avec des " " ;
     // Puis compléter jusqu'à la ligne rouge
@@ -235,6 +241,12 @@ void  Etincelle ()//////////
     SERIALTYPE.print('\t');
     JaugeSerial();
     SERIALTYPE.print('\n'); // fin de ligne
+
+    elapsedAffichage = 0;
+    previousAffichage = millis();
+
+  } else {
+    SERIALTYPE.flush();
   }
 
   Tst_Pot();//Voir si un potard connecté pour deplacer la courbe ou selectionner une autre courbe
