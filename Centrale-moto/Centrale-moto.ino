@@ -77,18 +77,25 @@ const uint16_t TailPixelCount = 12; // common number of pixels for turn signals
 const uint16_t TailStripTilt = 0; // Offset index to apply to tail strip in case level animation is done
 
 // Turn signals parameters
-const float MaxLightness = 0.4f; // max lightness at the head of the tail (0.5f is full bright)
 const float TurningAnimationTime = 1000; // duration of animation to loop (in ms)
 uint16_t TurningAnimationCurrentlyRunning = 0; // 0=off ; 1=left ; 2=right ; 3=warnings
 byte f_WARNINGS_READY = 0;
 RgbColor TurnSignalsColor(124, 20, 0);
 
+// Tail light parameters
+const float BrakingAnimationTime = 400; // duration of animation to loop (in ms)
+uint16_t BrakingAnimationCurrentlyRunning = 0; // 0 = off ; 1 = idle ; 2 = braking
+RgbColor TailSignalColor(124, 0, 0);       // Idle red
+RgbColor BrakeSignalColor(255, 0, 0);      // Braking red
+byte f_TAIL_ON = 1; // by default, tail is on
+
 
 // Buttons & inputs (constructors)
 ClickButton b_LEFT_cB(BUTTON_LEFT, LOW, CLICKBTN_PULLUP);
 ClickButton b_BEAM_cB(BUTTON_BEAM, LOW, CLICKBTN_PULLUP);
-ClickButton b_HORN_cB(BUTTON_HORN, LOW, CLICKBTN_PULLUP);
+//ClickButton b_HORN_cB(BUTTON_HORN, LOW, CLICKBTN_PULLUP);
 ClickButton b_RIGHT_cB(BUTTON_RIGHT, LOW, CLICKBTN_PULLUP);
+ClickButton b_BRAKE_cB(CONTACT_BRAKE, LOW, CLICKBTN_PULLUP);
 
 // Actuators and outputs (constructors)
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> stripLeftFront(TurnSignalPixelCount, a_FRONTLEFT);
@@ -130,6 +137,7 @@ void setup(){
     stripRightFront.Begin();
     stripRightRear.Begin();
     stripTail.Begin();
+
     stripLeftFront.Show();
     stripLeftRear.Show();
     stripRightFront.Show();
@@ -145,13 +153,17 @@ void setup(){
     b_BEAM_cB.multiclickTime = 180;  // Time limit for multi clicks
     b_BEAM_cB.longClickTime  = 1000; // time until "held-down clicks" register
 
-    b_HORN_cB.debounceTime   = 20;   // Debounce timer in ms
-    b_HORN_cB.multiclickTime = 180;  // Time limit for multi clicks
-    b_HORN_cB.longClickTime  = 1000; // time until "held-down clicks" register
+    // b_HORN_cB.debounceTime   = 20;   // Debounce timer in ms
+    // b_HORN_cB.multiclickTime = 180;  // Time limit for multi clicks
+    // b_HORN_cB.longClickTime  = 1000; // time until "held-down clicks" register
 
     b_RIGHT_cB.debounceTime   = 20;   // Debounce timer in ms
     b_RIGHT_cB.multiclickTime = 180;  // Time limit for multi clicks
     b_RIGHT_cB.longClickTime  = 1000; // time until "held-down clicks" register
+
+    b_BRAKE_cB.debounceTime   = 20;   // Debounce timer in ms
+    b_BRAKE_cB.multiclickTime = 180;  // Time limit for multi clicks
+    b_BRAKE_cB.longClickTime  = 1000; // time until "held-down clicks" register
 
     // Setup beam toggles:
     f_BEAM_ON = HIGH;
@@ -186,7 +198,7 @@ void loop(){
     } else if (b_RIGHT_cB.depressed) { // Left turn
         if (TurningAnimationCurrentlyRunning != 2)
             animations.StartAnimation(anim_TURNSIGNALS, TurningAnimationTime, TurningRightAnimation);
-    } else if (b_BEAM_cB.clicks == -2) { //Start warnings
+    } else if (b_BEAM_cB.clicks == -1) { //Start warnings
         if (TurningAnimationCurrentlyRunning != 3){
             animations.StartAnimation(anim_TURNSIGNALS, TurningAnimationTime, WarningAnimation);
         } else {
@@ -197,9 +209,8 @@ void loop(){
         animations.StartAnimation(anim_TURNSIGNALS, TurningAnimationTime, NotTurningAnimation);
     }
 
-#else
+#else //------Clickbutton case - not used in handlebar V1-----------
 
-    //------Clickbutton case - not used in handlebar V1-----------
     if (b_LEFT_cB.clicks == 1){ // Left button pressed once
         if (TurningAnimationCurrentlyRunning != 1)
             animations.StartAnimation(anim_TURNSIGNALS, TurningAnimationTime, TurningLeftAnimation);
@@ -234,30 +245,45 @@ void loop(){
     }
 #endif
 
-    // Beam function
-    if (b_BEAM_cB.clicks == 1) f_BEAM_HB = !f_BEAM_HB;
-    if (b_BEAM_cB.clicks == -1) f_BEAM_ON =!f_BEAM_ON;
+    // Brake / Tail section
 
-    if (f_BEAM_ON){
-        if (f_BEAM_HB) {
-            digitalWrite(a_HIGHBEAM, activeRelay);
-            digitalWrite(a_LOWBEAM, !activeRelay);
-        } else {
-            digitalWrite(a_HIGHBEAM, !activeRelay);
-            digitalWrite(a_LOWBEAM, activeRelay);
+    if (b_BEAM_cB.clicks == -2) f_TAIL_ON = !f_TAIL_ON; // Switch tail section
+
+    if (f_TAIL_ON){
+        if (b_BRAKE_cB.depressed && BrakingAnimationCurrentlyRunning != 2){ // Start braking anim if not started
+            animations.StartAnimation(anim_TAIL, BrakingAnimationTime, BrakingAnimation);
+        } else if (BrakingAnimationCurrentlyRunning != 1) {       // Start idle anim if not started
+            animations.StartAnimation(anim_TAIL, BrakingAnimationTime, IdleTailAnimation);
         }
-    } else {
-        digitalWrite(a_HIGHBEAM, !activeRelay);
-        digitalWrite(a_LOWBEAM, !activeRelay);
+    } else {    // otherwise, set off
+        animations.StartAnimation(anim_TAIL, BrakingAnimationTime, TailOffAnimation);
     }
 
-    // Instruments lights with beams
-    //digitalWrite(a_INSTRLIGHTS, f_BEAM_ON);
-    digitalWrite(a_INSTRLIGHTS, !activeRelay); // Overriden to low for now
+    // BEAM FUNCTION DEACTIVATED (Always active for now)
+    // Beam function
+    // if (b_BEAM_cB.clicks == 1) f_BEAM_HB = !f_BEAM_HB;
+    // if (b_BEAM_cB.clicks == -1) f_BEAM_ON =!f_BEAM_ON;
 
-    // Horn
-    //digitalWrite(a_HORN, b_HORN_cB.depressed);
-    digitalWrite(a_HORN, !activeRelay); // Overridden to low for now
+    // if (f_BEAM_ON){
+    //     if (f_BEAM_HB) {
+    //         digitalWrite(a_HIGHBEAM, activeRelay);
+    //         digitalWrite(a_LOWBEAM, !activeRelay);
+    //     } else {
+    //         digitalWrite(a_HIGHBEAM, !activeRelay);
+    //         digitalWrite(a_LOWBEAM, activeRelay);
+    //     }
+    // } else {
+    //     digitalWrite(a_HIGHBEAM, !activeRelay);
+    //     digitalWrite(a_LOWBEAM, !activeRelay);
+    // }
+
+    // // Instruments lights with beams
+    // //digitalWrite(a_INSTRLIGHTS, f_BEAM_ON);
+    // digitalWrite(a_INSTRLIGHTS, !activeRelay); // Overriden to low for now
+
+    // // Horn
+    // //digitalWrite(a_HORN, b_HORN_cB.depressed);
+    // digitalWrite(a_HORN, !activeRelay); // Overridden to low for now
 
     animations.UpdateAnimations();
     ShowAllStrips();
@@ -288,7 +314,7 @@ void SetupOutputPin(uint16_t pinNumber){
 void UpdateClickButtonsBeforeReading(){
     b_LEFT_cB.Update();
     b_BEAM_cB.Update();
-    b_HORN_cB.Update();
+    //b_HORN_cB.Update();
     b_RIGHT_cB.Update();
 }
 
@@ -465,6 +491,22 @@ void WarningAnimation(const AnimationParam& _param){
     }
 }
 
+void IdleTailAnimation(const AnimationParam& _param){
+    BrakingAnimationCurrentlyRunning = 1;
+    stripTail.ClearTo(TailSignalColor);
+}
+
+void BrakingAnimation(const AnimationParam& _param){
+    BrakingAnimationCurrentlyRunning = 2;
+    stripTail.ClearTo(BrakeSignalColor);
+}
+    
+void TailOffAnimation(const AnimationParam& _param){
+    BrakingAnimationCurrentlyRunning = 0;
+    stripTail.ClearTo(RgbColor(0,0,0));
+}
+
+
 /* void MeasuringCurrentAnimation(const AnimationParam& _param){
 
     // Remaining issue: zero-ing at startup ;
@@ -486,5 +528,3 @@ void WarningAnimation(const AnimationParam& _param){
 }
 */
 #pragma endregion
-
-// TODO :  add brake neopixels (or led plates) + Do animations
