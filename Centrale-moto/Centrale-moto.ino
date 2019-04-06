@@ -80,14 +80,14 @@ const uint16_t TailStripTilt = 0; // Offset index to apply to tail strip in case
 const float TurningAnimationTime = 1000; // duration of animation to loop (in ms)
 uint16_t TurningAnimationCurrentlyRunning = 0; // 0=off ; 1=left ; 2=right ; 3=warnings
 byte f_WARNINGS_READY = 0;
-RgbColor TurnSignalsColor(124, 20, 0);
+RgbColor TurnSignalsColor(190, 60, 0);
 
 // Tail light parameters
 const float BrakingAnimationTime = 400; // duration of animation to loop (in ms)
 uint16_t BrakingAnimationCurrentlyRunning = 0; // 0 = off ; 1 = idle ; 2 = braking
-RgbColor TailSignalColor(124, 0, 0);       // Idle red
+RgbColor TailSignalColor(35, 0, 0);       // Idle red
 RgbColor BrakeSignalColor(255, 0, 0);      // Braking red
-byte f_TAIL_ON = 1; // by default, tail is on
+byte f_TAIL_ON = 1; // by default, tail is on, but animation is not started (will start at first update, or btrake if braking
 
 
 // Buttons & inputs (constructors)
@@ -123,6 +123,7 @@ void setup(){
 
     // Debug serial
     Serial.begin(115200);
+    pinMode(LED_BUILTIN, OUTPUT);
 
     // Setup output relay pins
     SetupOutputPin(a_LOWBEAM);
@@ -259,6 +260,9 @@ void loop(){
         animations.StartAnimation(anim_TAIL, BrakingAnimationTime, TailOffAnimation);
     }
 
+    // Debug
+    //if (b_BRAKE_cB.depressed) digitalWrite(LED_BUILTIN, HIGH); else digitalWrite(LED_BUILTIN, LOW);
+
     // BEAM FUNCTION DEACTIVATED (Always active for now)
     // Beam function
     // if (b_BEAM_cB.clicks == 1) f_BEAM_HB = !f_BEAM_HB;
@@ -316,6 +320,7 @@ void UpdateClickButtonsBeforeReading(){
     b_BEAM_cB.Update();
     //b_HORN_cB.Update();
     b_RIGHT_cB.Update();
+    b_BRAKE_cB.Update();
 }
 
 #pragma region animations
