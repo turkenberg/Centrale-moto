@@ -226,7 +226,8 @@ void  Etincelle ()//////////
   elapsedAffichage = millis() - previousAffichage;
 
   //  Pour Dwell=4 uniquement, tant que N < Ntrans (Dwell4 ou non) on affiche en Bluetooth le regime et l'avance
-  if (((Dwell != 4) || (T > Ttrans)) && (elapsedAffichage > periodeAffichage) ) {
+  if ((Dwell != 4) || (T > Ttrans)) {
+    // if (((Dwell != 4) || (T > Ttrans)) && (elapsedAffichage > periodeAffichage) ) {
     // Trouver progession de la jauge série
     // On va y ajouter le nombre de "curseur" ; puis compléter avec des " " ;
     // Puis compléter jusqu'à la ligne rouge
@@ -237,9 +238,9 @@ void  Etincelle ()//////////
     SERIALTYPE.print('\t');
     SERIALTYPE.print('\t');
     SERIALTYPE.print(int(AngleCapteur - (D + tcor)*AngleCibles / T));
-    SERIALTYPE.print('\t');
-    SERIALTYPE.print('\t');
-    JaugeSerial();
+    //SERIALTYPE.print('\t');
+    //SERIALTYPE.print('\t');
+    //JaugeSerial();
     SERIALTYPE.print('\n'); // fin de ligne
 
     elapsedAffichage = 0;
