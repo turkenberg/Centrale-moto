@@ -1,7 +1,9 @@
 #pragma region Libraries
-#include "TimerOne.h"
+#include <Arduino.h>
+#include <TimerOne.h>
 #include <SoftwareSerial.h>
 #include <FastLED.h>
+#include <EEPROM.h>
 #pragma endregion
 
 #define SERIALTYPE Serial // BT (bluetooth) or Serial (USB)
@@ -91,6 +93,18 @@ SoftwareSerial BT(10, 11);//Ceci est une option pour compte-tours en Bluetooth
 unsigned long periodeAffichage = 200; // Intervale entre chaque affichage (ms)
 unsigned long elapsedAffichage = 0;
 unsigned long previousAffichage = 0;
+#pragma endregion
+#pragma region EEPROM and UI
+// address list:
+int addr_AngleCapteurDefault = 0;
+int addr_AngleCapteur = 1;
+//int addr_courbe_selection = 3; // 0=A ; 1=B ; 2=C
+
+String readString = ""; // What we read from Serial
+byte Mode_Config = 0; // are we in config mode ?
+int currentMenu = 0; // Which menu are we in ?
+int currentMenuIsStarted = 0; // First time we landed in the current menu ?
+
 #pragma endregion
 #pragma region Paramètres de jauge graphique pocketchip
 //Jauge sur le port série : variables
@@ -237,16 +251,16 @@ void  Etincelle ()//////////
     SERIALTYPE.print('\t');
     SERIALTYPE.print('\t');
     SERIALTYPE.print(int(AngleCapteur - (D + tcor)*AngleCibles / T));
-    SERIALTYPE.print('\t');
-    SERIALTYPE.print('\t');
-    JaugeSerial();
+    //SERIALTYPE.print('\t');
+    //SERIALTYPE.print('\t');
+    //JaugeSerial();
     SERIALTYPE.print('\n'); // fin de ligne
 
     elapsedAffichage = 0;
     previousAffichage = millis();
 
   } else {
-    SERIALTYPE.flush();
+    //SERIALTYPE.flush();
   }
 
   Tst_Pot();//Voir si un potard connecté pour deplacer la courbe ou selectionner une autre courbe
@@ -414,6 +428,103 @@ void loop()   ////////////////
   //      Serial.println(NTa / T, 1);
   //      SetFlashOff(); // <-- FLASH OFF
   while (digitalRead(Cible) == CaptOn); //Attendre si la cible encore active
+
+  //  Durant le cycle, vérifier si on a une input en Serial
+  if (SERIALTYPE.available()){
+
+    readString = SERIALTYPE.readStringUntil("/n");
+
+    if (readString == "config"){
+
+      SERIALTYPE.print('\n');
+      SERIALTYPE.print("Démarrage de la configuration");
+      SERIALTYPE.flush();
+      for(int i = 0; i < 5; i++){
+        delay(500);
+        SERIALTYPE.print(" .");
+      }
+      delay(500);
+      SERIALTYPE.print(" OK");
+      SERIALTYPE.println("L'allumage est déactivé pendant la configuration.");
+      SERIALTYPE.print('\n');
+
+      currentMenu = 0; // root level
+      currentMenuIsStarted = 0; // first time entering root level
+
+      Mode_Config = TRUE;
+
+    } else {
+      SERIALTYPE.println("commande incorrecte, veuillez réessayer. config pour entrer en mode configuration.");
+    }
+  }
+
+  while (Mode_Config){ // Si on est en mode config, on reste dans cette boucle jusqu'à ce que le mode config soit désactivé depuis la boucle
+
+    switch (currentMenu)
+    {
+    case 0:   // Home menu
+      // At root level, if a serial command is entered, select proper menu
+      if (!currentMenuIsStarted){
+        SERIALTYPE.println("Menu principal, entrez une commande");
+        currentMenuIsStarted = TRUE;
+      }
+
+      if (SERIALTYPE.available()){
+
+        readString = SERIALTYPE.readStringUntil("/n");
+
+        switch (readString)
+        {
+          case "help":
+            SERIALTYPE.println("Voici la liste des commandes:");
+            SERIALTYPE.print("angle"); SERIALTYPE.print('/t'); SERIALTYPE.print('/t'); SERIALTYPE.print("Modifier l'angle de calage de la cible avant PMH."); SERIALTYPE.print("/n");
+            break;
+
+          case "angle":
+            currentMenu = 1;  // Activate angle menu
+            currentMenuIsStarted = 0; // first time entering aformentionned menu
+            SERIALTYPE.print("Procédure de recalage de la cible."); SERIALTYPE.print('/n');
+            break;
+        
+          default:
+            SERIALTYPE.println("Je n'ai pas compris. (help)");
+            break;
+        }
+    }
+      break;
+
+    case 1:   // angle menu
+
+      // 1. explain (first only)
+      if (!currentMenuIsStarted){
+        SERIALTYPE.print("La LED sur l'arduino affiche maintenant le front montant du capteur"); SERIALTYPE.print('/n');
+        SERIALTYPE.print("Mesurer sur le volant moteur l'angle entre le repère au front montant du capteur et le PMH"); SERIALTYPE.print('/n');
+        SERIALTYPE.print('Entrer cet angle (compris entre 45 et 315) en degrés pour mettre à jour'); SERIALTYPE.print('/n');
+        currentMenuIsStarted = TRUE;
+      }
+      // 2. Activer led pour calage
+      if (digitalRead(Cible) == !CaptOn) digitalWrite(13, LOW); else digitalWrite(13, HIGH);
+
+
+      // 3. Wait for user input for new angle
+      if (SERIALTYPE.available()){
+        readString = SERIALTYPE.readStringUntil("/n");
+        // TODO
+      }
+      // 4. Check validity of user input
+      // 5. Update EEPROM
+      // 6. Restart Arduino
+
+      // TODO : add EEPROM read to setup
+
+
+      break;
+  
+    default:
+      break;
+    }
+
+
 }
 #pragma endregion
 #pragma region exemple de capteur
