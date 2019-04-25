@@ -15,17 +15,17 @@ char ver[] = "Version du 25_04_19";
 //**************  Seulement  6 lignes à renseigner obligatoirement.****************
 //**********Ce sont:  Na  Anga  Ncyl  AngleCapteur  CaptOn  Dwell******************
 //*******//*********Courbe   A
-int Na[] = {0, 500, 800, 2000, 4200, 10000, 0};//t/*mn vilo
-int Anga[] = {0, 10 , 10, 10, 38, 38, 0};
+int Na[] =      {0 ,500    ,2000  ,4200  ,10000  ,0};//t/*mn vilo
+int Anga[] =    {0 ,10     ,10    ,38    ,38     ,0};
 //*******//*********Courbe   B
-int Nb[] = {0, 500,  5400, 0};   //Connecter D8 à la masse
-int Angb[] = {0, 10,  10,   0};
+int Nb[] =      {0 ,500    ,2000  ,5400  ,10000  ,0};   //Connecter D8 à la masse
+int Angb[] =    {0 ,2      ,2     ,17    ,17     ,0};
 //*******//*********Courbe   C
-int Nc[] = {0,  500, 9000,  0};    //Connecter D9 à la masse
-int Angc[] = {0,  10, 35,   0};
+int Nc[] =      {0 ,500    ,2000  ,5400    ,0};    //Connecter D9 à la masse
+int Angc[] =    {0 ,10     ,10    ,38      ,0};
 //**********************************************************************************
 int Ncyl = 1;           //Nombre de cylindres, moteur 4 temps.Multiplier par 2 pour moteur 2 temps
-int AngleCapteur = 113; //Position en degrès avant le PMH du capteur(Hall ou autre ).
+int AngleCapteur = 99; //Position en degrès avant le PMH du capteur(Hall ou autre ).
 const int CaptOn = 0;  //CapteurOn = 1 déclenchement sur front montant (par ex. capteur Hall "saturé")
 //CapteurOn = 0 déclenchement sur front descendant (par ex. capteur Hall "non saturé").Voir fin du listing
 const int Dwell = 3;
@@ -332,7 +332,7 @@ void  Init ()/////////////
     SERIALTYPE.print("   :' // ':   \\ \\ ''..'--:'-.. ':");    SERIALTYPE.print('\n');
     SERIALTYPE.print("   '. '' .'    \\.....:--'.-'' .'");      SERIALTYPE.print('\n');
     SERIALTYPE.print("    ':..:'                ':..:'");       SERIALTYPE.print('\n');
-  SERIALTYPE.println("B i e n v e n u e   s u r   H 9 0 0 0");
+    SERIALTYPE.println("B i e n v e n u e   s u r   H 9 0 0 0");
 
     SERIALTYPE.print("  Nombre cylindres"); SERIALTYPE.print('\t');                 SERIALTYPE.print(Ncyl);                                     SERIALTYPE.print('\n');
     SERIALTYPE.print("  Angle avant PMH");  SERIALTYPE.print('\t');                 SERIALTYPE.print(AngleCapteur);     SERIALTYPE.print(" deg");       SERIALTYPE.print('\n');
@@ -405,7 +405,7 @@ void setup()///////////////
 #pragma region LOOP
 void loop()   ////////////////
 ////////////////////////////////////////////////////////////////////////////
-{ while (digitalRead(Cible) == !CaptOn); //Attendre front actif de la cible
+{ while (digitalRead(Cible) == !CaptOn && !SERIALTYPE.available()); //Attendre front actif de la cible OU entrée série
   T = micros() - prec_H;    //front actif, arrivé calculer T
   prec_H = micros(); //heure du front actuel qui deviendra le front precedent
   if ( Mot_OFF == 1 ) { //Demarrage:premier front de capteur
@@ -421,10 +421,7 @@ void loop()   ////////////////
   }
   //      Serial.println(NTa / T, 1);
   //      SetFlashOff(); // <-- FLASH OFF
-  while (digitalRead(Cible) == CaptOn); //Attendre si la cible encore active
-
-
-
+  while (digitalRead(Cible) == CaptOn && !SERIALTYPE.available()); //Attendre si la cible encore active
 
   //  Durant le cycle, vérifier si on a une input en Serial
   if (SERIALTYPE.available()){
@@ -473,11 +470,13 @@ void loop()   ////////////////
 
         if (readInt > 0){
           if (readString.toInt() - 45 < 255){
-            EEPROM.update(addr_AngleCapteur,readInt);
+            EEPROM.update(addr_AngleCapteur,readInt - 45);
             EEPROM.update(addr_AngleCapteur_IsDefault,0);
 
             SERIALTYPE.print("Calage mis à jour, re-calcul des paramètres d'allumage"); SERIALTYPE.print('\n');
-            Init();
+            SERIALTYPE.flush();
+            //software_Reboot();
+            software_Reset();
             Mode_Config = 0;
           } else {
             SERIALTYPE.print("Entrée non valide, saisir un angle entre 45 et 300"); SERIALTYPE.print('\n');
@@ -527,12 +526,12 @@ void loop()   ////////////////
 //  gf = 1; while (gf < 10)gf++;//gf DOIT être Globale et Float 10=100µs,2000=21.8ms, retard/Cible=50µs
 //  digitalWrite(Bob, 0); //
 //}
-//void software_Reset()  //jamais testé
+void software_Reset()  //jamais testé
 // Redémarre le programme depuis le début mais ne
 // réinitialiser pas les périphériques et les registresivre...
-//{
-//  asm volatile ("  jmp 0");
-//}
+{
+  asm volatile ("  jmp 0");
+}
 #pragma endregion
 #pragma region sandbox et helpers
 
@@ -546,11 +545,11 @@ void ModifierCourbeEEPROM(byte courbe, char car){
 
 void LoadConfigFromEEPROM(){
   // Function to call previous values from EEPROM if available
-  // Read from EEPROM last stored angular value if it is not default (it can be zero..!)
-  if (EEPROM.read(addr_AngleCapteur_IsDefault) == 0); AngleCapteur = EEPROM.read(addr_AngleCapteur) + 45;
+  // Read from EEPROM last stored angular value if it is not default (it can be 255..!)
+  if (EEPROM.read(addr_AngleCapteur_IsDefault) != 1) AngleCapteur = EEPROM.read(addr_AngleCapteur) + 45;
 
   // Read
-  if (EEPROM.read(addr_courbe_selection) != 0){
+  if (EEPROM.read(addr_courbe_selection) != 255){
 
     switch (EEPROM.read(addr_courbe_selection)){
     case 1:
