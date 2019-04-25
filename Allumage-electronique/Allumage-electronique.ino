@@ -4,25 +4,28 @@
 #include <SoftwareSerial.h>
 #include <FastLED.h>
 #include <EEPROM.h>
+#include <avr/wdt.h>
 #pragma endregion
 
-#define SERIALTYPE BT // BT (bluetooth) or Serial (USB)
-char ver[] = "Version du 24_03_19";
+#define SERIALTYPE Serial // BT (bluetooth) or Serial (USB)
+char ver[] = "Version du 25_04_19";
 
 #pragma region Paramètres allumage
 //******************************************************************************
 //**************  Seulement  6 lignes à renseigner obligatoirement.****************
 //**********Ce sont:  Na  Anga  Ncyl  AngleCapteur  CaptOn  Dwell******************
-
+//*******//*********Courbe   A
 int Na[] = {0, 500, 800, 2000, 4200, 10000, 0};//t/*mn vilo
-//Na[] et Anga[] doivent obligatoirement débuter puis se terminer par  0, et  contenir des valeurs  entières >=1
-//Le dernier Na fixe la ligne rouge, c'est à dire la coupure de l'allumage.
-//Le nombre de points est libre.L'avance est imposée à 0° entre 0 et Nplancher t/mn
-//Anga [] degrés d'avance vilebrequin correspondant ( peut croitre ou decroitre)
-//int Anga[] = {0, 1 , 8 , 10  , 12,    14,  16,    22,  24,   24,   25,    26,   28,   28, 0};
 int Anga[] = {0, 10 , 10, 10, 38, 38, 0};
+//*******//*********Courbe   B
+int Nb[] = {0, 500,  5400, 0};   //Connecter D8 à la masse
+int Angb[] = {0, 10,  10,   0};
+//*******//*********Courbe   C
+int Nc[] = {0,  500, 9000,  0};    //Connecter D9 à la masse
+int Angc[] = {0,  10, 35,   0};
+//**********************************************************************************
 int Ncyl = 1;           //Nombre de cylindres, moteur 4 temps.Multiplier par 2 pour moteur 2 temps
-const int AngleCapteur = 113; //Position en degrès avant le PMH du capteur(Hall ou autre ).
+int AngleCapteur = 113; //Position en degrès avant le PMH du capteur(Hall ou autre ).
 const int CaptOn = 0;  //CapteurOn = 1 déclenchement sur front montant (par ex. capteur Hall "saturé")
 //CapteurOn = 0 déclenchement sur front descendant (par ex. capteur Hall "non saturé").Voir fin du listing
 const int Dwell = 3;
@@ -60,15 +63,6 @@ const int tetin = 500; //Typique 500 à 1000µs, durée etincelle regimes >Ntran
 //Si multi-étincelle désiré jusqu'à N_multi, modifier ces deux lignes
 const int Multi = 0;//1 pour multi-étincelles
 const int N_multi = 2000; //t/mn pour 4 cylindres par exemple
-//*******************MULTICOURBES****IF FAUT METTRE D8 ou D9 A LA MASSE!!!!!!!*******
-//A la place de la courbe a, on peut selectionner la courbe b (D8 à la masse)ou la c (D9 à la masse)
-//*******//*********Courbe   b
-int Nb[] = {0, 500,  5400, 0};   //Connecter D8 à la masse
-int Angb[] = {0, 10,  10,   0};
-//*******//*********Courbe   c
-int Nc[] = {0,  500, 9000,  0};    //Connecter D9 à la masse
-int Angc[] = {0,  10, 35,   0};
-//**********************************************************************************
 //************Ces 3 valeurs sont eventuellement modifiables*****************
 //Ce sont: Nplancher, trech , Dsecu et delAv
 const int Nplancher = 500; // vitesse en t/mn jusqu'a laquelle l'avance  = 0°
@@ -96,9 +90,9 @@ unsigned long previousAffichage = 0;
 #pragma endregion
 #pragma region EEPROM and UI
 // address list:
-int addr_AngleCapteurDefault = 0;
-int addr_AngleCapteur = 1;
-//int addr_courbe_selection = 3; // 0=A ; 1=B ; 2=C
+const int addr_AngleCapteur = 0;
+const int addr_AngleCapteur_IsDefault = 1;
+const int addr_courbe_selection = 2; // 0 = default (no load) ; others = update + value
 
 String readString = ""; // What we read from Serial
 byte Mode_Config = 0; // are we in config mode ?
@@ -367,13 +361,11 @@ void  isr_GestionIbob()//////////
 #pragma region curves manager et selecteur de courbe
 void  Select_Courbe()///////////
 //Par défaut, la courbe a est déja selectionnée
-{ if (digitalRead(Courbe_b) == 0) {   //D8 à la masse
-    courbe_selection = 'B';
+{ if (digitalRead(Courbe_b) == 0 || courbe_selection == 'B') {   //D8 à la masse
     pN = &Nb[0];  // pointer à la courbe b
     pA = &Angb[0];
   }
-  if (digitalRead(Courbe_c) == 0) {    //D9 à la masse
-    courbe_selection = 'C';
+  if (digitalRead(Courbe_c) == 0 || courbe_selection == 'C') {    //D9 à la masse
     pN = &Nc[0];  // pointer à la courbe c
     pA = &Angc[0];
   }
@@ -404,8 +396,9 @@ void setup()///////////////
   pinMode(Led13, OUTPUT);//Led d'origine sur tout Arduino, temoin du courant dans la bobine
   //pinMode(flash, OUTPUT);//Led stroboscopique pour le calage sur le villebrequin
 
+  LoadConfigFromEEPROM();
   Init();// Executée une fois au demarrage et à chaque changement de courbe
-  InitFlashStuff();// Préparer le flash (optionnel)
+
 }
 ///////////////////////////////////////////////////////////////////////////
 #pragma endregion
@@ -430,32 +423,29 @@ void loop()   ////////////////
   //      SetFlashOff(); // <-- FLASH OFF
   while (digitalRead(Cible) == CaptOn); //Attendre si la cible encore active
 
+
+
+
   //  Durant le cycle, vérifier si on a une input en Serial
   if (SERIALTYPE.available()){
 
-    readString = SERIALTYPE.readStringUntil("/n");
+    readString = SERIALTYPE.readStringUntil('\n');
 
-    if (readString == "config"){
+    if (readString.startsWith("calage")){
 
-      SERIALTYPE.print('\n');
-      SERIALTYPE.print("Démarrage de la configuration");
-      SERIALTYPE.flush();
-      for(int i = 0; i < 5; i++){
-        delay(500);
-        SERIALTYPE.print(" .");
-      }
-      delay(500);
-      SERIALTYPE.print(" OK");
-      SERIALTYPE.println("L'allumage est déactivé pendant la configuration.");
-      SERIALTYPE.print('\n');
+      currentMenu = 1; // calage angulaire
+      currentMenuIsStarted = 0; // first time
 
-      currentMenu = 0; // root level
-      currentMenuIsStarted = 0; // first time entering root level
+      Mode_Config = 1;
 
-      Mode_Config = TRUE;
-
+    } else if(readString.startsWith("courbe ")){
+      char c = readString.charAt(7);
+           if (c == 'A' || c == 'a') ModifierCourbeEEPROM(1,'A');
+      else if (c == 'B' || c == 'b') ModifierCourbeEEPROM(2,'B');
+      else if (c == 'C' || c == 'c') ModifierCourbeEEPROM(3,'C');
+      else {SERIALTYPE.print("Courbe non reconnue"); SERIALTYPE.print('\n');}
     } else {
-      SERIALTYPE.println("commande incorrecte, veuillez réessayer. config pour entrer en mode configuration.");
+      SERIALTYPE.println("commande incorrecte, veuillez réessayer.");
     }
   }
 
@@ -463,69 +453,49 @@ void loop()   ////////////////
 
     switch (currentMenu)
     {
-    case 0:   // Home menu
-      // At root level, if a serial command is entered, select proper menu
-      if (!currentMenuIsStarted){
-        SERIALTYPE.println("Menu principal, entrez une commande");
-        currentMenuIsStarted = TRUE;
-      }
-
-      if (SERIALTYPE.available()){
-
-        readString = SERIALTYPE.readStringUntil("/n");
-
-        switch (readString)
-        {
-          case "help":
-            SERIALTYPE.println("Voici la liste des commandes:");
-            SERIALTYPE.print("angle"); SERIALTYPE.print('/t'); SERIALTYPE.print('/t'); SERIALTYPE.print("Modifier l'angle de calage de la cible avant PMH."); SERIALTYPE.print("/n");
-            break;
-
-          case "angle":
-            currentMenu = 1;  // Activate angle menu
-            currentMenuIsStarted = 0; // first time entering aformentionned menu
-            SERIALTYPE.print("Procédure de recalage de la cible."); SERIALTYPE.print('/n');
-            break;
-        
-          default:
-            SERIALTYPE.println("Je n'ai pas compris. (help)");
-            break;
-        }
-    }
-      break;
-
     case 1:   // angle menu
-
-      // 1. explain (first only)
+      
+      // 1. Explication utilisateur
       if (!currentMenuIsStarted){
-        SERIALTYPE.print("La LED sur l'arduino affiche maintenant le front montant du capteur"); SERIALTYPE.print('/n');
-        SERIALTYPE.print("Mesurer sur le volant moteur l'angle entre le repère au front montant du capteur et le PMH"); SERIALTYPE.print('/n');
-        SERIALTYPE.print('Entrer cet angle (compris entre 45 et 315) en degrés pour mettre à jour'); SERIALTYPE.print('/n');
-        currentMenuIsStarted = TRUE;
+        SERIALTYPE.print('\n');
+        SERIALTYPE.print("Entrer l'angle de calage, compris entre 45 et 300 degrés. La led de l'arduino indique le front montant"); SERIALTYPE.print('\n');
+        SERIALTYPE.flush();
+        currentMenuIsStarted = 1;
       }
       // 2. Activer led pour calage
       if (digitalRead(Cible) == !CaptOn) digitalWrite(13, LOW); else digitalWrite(13, HIGH);
 
-
       // 3. Wait for user input for new angle
       if (SERIALTYPE.available()){
-        readString = SERIALTYPE.readStringUntil("/n");
-        // TODO
+        readString = SERIALTYPE.readStringUntil('\n');
+
+        int readInt = atoi(readString.c_str());
+
+        if (readInt > 0){
+          if (readString.toInt() - 45 < 255){
+            EEPROM.update(addr_AngleCapteur,readInt);
+            EEPROM.update(addr_AngleCapteur_IsDefault,0);
+
+            SERIALTYPE.print("Calage mis à jour, re-calcul des paramètres d'allumage"); SERIALTYPE.print('\n');
+            Init();
+            Mode_Config = 0;
+          } else {
+            SERIALTYPE.print("Entrée non valide, saisir un angle entre 45 et 300"); SERIALTYPE.print('\n');
+          }
+        } else if (readString == "exit"){
+          SERIALTYPE.print("Réactivation de l'allumage."); SERIALTYPE.print('\n');
+          currentMenu = 0;
+          currentMenuIsStarted = 0;
+          Mode_Config = 0;
+        }
       }
-      // 4. Check validity of user input
-      // 5. Update EEPROM
-      // 6. Restart Arduino
-
-      // TODO : add EEPROM read to setup
-
-
-      break;
-  
-    default:
+      break; // looping the while loop
+    
+    default: // en cas d'erreur, out!
+      Mode_Config = 0;
       break;
     }
-
-
+  }
 }
 #pragma endregion
 #pragma region exemple de capteur
@@ -565,6 +535,51 @@ void loop()   ////////////////
 //}
 #pragma endregion
 #pragma region sandbox et helpers
+
+void ModifierCourbeEEPROM(byte courbe, char car){
+  EEPROM.update(addr_courbe_selection, courbe);
+  SERIALTYPE.print("Courbe mise à jour, recalcul des paramètres d'avance"); SERIALTYPE.print('\n');
+  courbe_selection = car;
+  Select_Courbe();
+  Mode_Config = 0;
+}
+
+void LoadConfigFromEEPROM(){
+  // Function to call previous values from EEPROM if available
+  // Read from EEPROM last stored angular value if it is not default (it can be zero..!)
+  if (EEPROM.read(addr_AngleCapteur_IsDefault) == 0); AngleCapteur = EEPROM.read(addr_AngleCapteur) + 45;
+
+  // Read
+  if (EEPROM.read(addr_courbe_selection) != 0){
+
+    switch (EEPROM.read(addr_courbe_selection)){
+    case 1:
+      courbe_selection = 'A';
+      break;
+      
+    case 2:
+      courbe_selection = 'B';
+      break;
+
+    case 3:
+      courbe_selection = 'C';
+      break;
+
+    default:
+      EEPROM.update(addr_courbe_selection, 0); // remise à zéro si valeur autre
+      break;
+    }
+  }
+}
+
+void software_Reboot() // not used for now (can call Init() directly from config mode)
+{
+  wdt_enable(WDTO_15MS);
+  while(1)
+  {
+  }
+}
+
 
 void InitFlashStuff(){
     FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
@@ -607,5 +622,4 @@ void JaugeSerial(){
 
 }
 
-//void(* resetFunc) (void) = 0; //declare reset function @ address 0
 #pragma endregion
