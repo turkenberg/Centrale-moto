@@ -100,25 +100,6 @@ int currentMenu = 0; // Which menu are we in ?
 int currentMenuIsStarted = 0; // First time we landed in the current menu ?
 
 #pragma endregion
-#pragma region Paramètres de jauge graphique pocketchip
-//Jauge sur le port série : variables
-String curseur = "=";         // fill
-String vide = " ";
-String zonerouge = ".";
-String ligne_rouge = "[";     // ligne rouge
-String fin_de_jauge = "]";    // fin de jauge
-// ****** UTF8-Decoder: convert UTF8-string to extended ASCII *******
-static byte c1;  // Last character buffer
-int nombre_jauge_char = 30;   // Nombre de caractères pour afficher la jauge
-int unsigned long plage_jauge_N = 11000;  // Régime max de la jauge
-char jauge[]="=============            [...]";               // Contient la jauge sous forme de caractères (PIXEL + MARGE DE 5)
-int Jauge_active_index; // index à partir duquel il y a remplissage
-int Jauge_limite_index; // index à partir duquel c'est la ligne rouge
-int j; //index de jauge
-float active; // index de jauge régime moteur
-float limite; // index de ligne rouge moteur
-// Fin de jauge
-#pragma endregion
 #pragma region Lampe strobo
 // Flashing W2812b stuff:
 #define NUM_LEDS 10
@@ -442,7 +423,7 @@ void loop()   ////////////////
       else if (c == 'C' || c == 'c') ModifierCourbeEEPROM(3,'C');
       else {SERIALTYPE.print("Courbe non reconnue"); SERIALTYPE.print('\n');}
     } else {
-      SERIALTYPE.println("commande incorrecte, veuillez réessayer.");
+      SERIALTYPE.println("commande inconnue.");
     }
   }
 
@@ -455,7 +436,7 @@ void loop()   ////////////////
       // 1. Explication utilisateur
       if (!currentMenuIsStarted){
         SERIALTYPE.print('\n');
-        SERIALTYPE.print("Entrer l'angle de calage, compris entre 45 et 300 degrés. La led de l'arduino indique le front montant"); SERIALTYPE.print('\n');
+        SERIALTYPE.print("Entrer l'angle de calage, compris entre 45 et 300 degrés."); ; SERIALTYPE.print('\n'); ; SERIALTYPE.print("La led de l'arduino indique le front montant"); SERIALTYPE.print('\n');
         SERIALTYPE.flush();
         currentMenuIsStarted = 1;
       }
@@ -476,8 +457,8 @@ void loop()   ////////////////
             SERIALTYPE.print("Calage mis à jour, re-calcul des paramètres d'allumage"); SERIALTYPE.print('\n');
             SERIALTYPE.flush();
             //software_Reboot();
-            software_Reset();
             Mode_Config = 0;
+            software_Reset();
           } else {
             SERIALTYPE.print("Entrée non valide, saisir un angle entre 45 et 300"); SERIALTYPE.print('\n');
           }
@@ -490,7 +471,7 @@ void loop()   ////////////////
       }
       break; // looping the while loop
     
-    default: // en cas d'erreur, out!
+    default: // en cas de choses bizarres, out!
       Mode_Config = 0;
       break;
     }
@@ -595,22 +576,4 @@ void SetFlashOff(){
     // Show the leds (only one of which is set to white, from above)
     FastLED.show();
 }
-
-void JaugeSerial(){
-
-    active = (float)(NT/T) * nombre_jauge_char / plage_jauge_N;
-    limite = (float)(NT/Tlim) * nombre_jauge_char / plage_jauge_N;
-    Jauge_active_index = static_cast<int>(active);
-    Jauge_limite_index = static_cast<int>(limite);
-
-    for (j=0; j<=nombre_jauge_char; j++){
-        if (j <= Jauge_active_index)         SERIALTYPE.print(curseur); // plein
-        else if (j < Jauge_limite_index)     SERIALTYPE.print(vide);
-        else if (j == Jauge_limite_index)    SERIALTYPE.print(ligne_rouge);
-        else if (j < nombre_jauge_char)      SERIALTYPE.print(zonerouge);
-        else if (j == nombre_jauge_char)     SERIALTYPE.print(fin_de_jauge);  // risk of out of range ?                            
-    }
-
-}
-
 #pragma endregion
