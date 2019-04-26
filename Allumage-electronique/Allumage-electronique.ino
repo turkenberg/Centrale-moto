@@ -7,7 +7,7 @@
 #include <avr/wdt.h>
 #pragma endregion
 
-#define SERIALTYPE Serial // BT (bluetooth) or Serial (USB)
+#define SERIALTYPE BT // BT (bluetooth) or Serial (USB)
 char ver[] = "Version du 25_04_19";
 
 #pragma region Paramètres allumage
@@ -15,7 +15,7 @@ char ver[] = "Version du 25_04_19";
 //**************  Seulement  6 lignes à renseigner obligatoirement.****************
 //**********Ce sont:  Na  Anga  Ncyl  AngleCapteur  CaptOn  Dwell******************
 //*******//*********Courbe   A
-int Na[] =      {0 ,500    ,2000  ,4200  ,10000  ,0};//t/*mn vilo
+int Na[] =      {0 ,500    ,2000  ,5400  ,10000  ,0};//t/*mn vilo
 int Anga[] =    {0 ,10     ,10    ,38    ,38     ,0};
 //*******//*********Courbe   B
 int Nb[] =      {0 ,500    ,2000  ,5400  ,10000  ,0};   //Connecter D8 à la masse
@@ -568,14 +568,6 @@ void LoadConfigFromEEPROM(){
       EEPROM.update(addr_courbe_selection, 0); // remise à zéro si valeur autre
       break;
     }
-  }
-}
-
-void software_Reboot() // not used for now (can call Init() directly from config mode)
-{
-  wdt_enable(WDTO_15MS);
-  while(1)
-  {
   }
 }
 
