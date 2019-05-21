@@ -99,6 +99,8 @@ byte Mode_Config = 0; // are we in config mode ?
 int currentMenu = 0; // Which menu are we in ?
 int currentMenuIsStarted = 0; // First time we landed in the current menu ?
 
+byte mustRestart = 0;
+
 #pragma endregion
 #pragma region Lampe strobo
 // Flashing W2812b stuff:
@@ -202,7 +204,6 @@ void  Etincelle ()//////////
       case  3:      //Type "vis platinées", Off 1/3, On 2/3
         Davant_rech = T / 3;
         break;
-
 
       case  4:     //Type optimisé haut régime
         if ( T > Ttrans )Davant_rech = T / 3; // En dessous de N trans, typique 3000t/mn
@@ -313,7 +314,7 @@ void  Init ()/////////////
     SERIALTYPE.print("   :' // ':   \\ \\ ''..'--:'-.. ':");    SERIALTYPE.print('\n');
     SERIALTYPE.print("   '. '' .'    \\.....:--'.-'' .'");      SERIALTYPE.print('\n');
     SERIALTYPE.print("    ':..:'                ':..:'");       SERIALTYPE.print('\n');
-    SERIALTYPE.println("B i e n v e n u e   s u r   H 9 0 0 0");
+    SERIALTYPE.println("B i e n v e n u e   s u r   H 9 0 0 0");SERIALTYPE.print('\n');
 
     SERIALTYPE.print("  Nombre cylindres"); SERIALTYPE.print('\t');                 SERIALTYPE.print(Ncyl);                                     SERIALTYPE.print('\n');
     SERIALTYPE.print("  Angle avant PMH");  SERIALTYPE.print('\t');                 SERIALTYPE.print(AngleCapteur);     SERIALTYPE.print(" deg");       SERIALTYPE.print('\n');
@@ -377,6 +378,7 @@ void setup()///////////////
   pinMode(Led13, OUTPUT);//Led d'origine sur tout Arduino, temoin du courant dans la bobine
   //pinMode(flash, OUTPUT);//Led stroboscopique pour le calage sur le villebrequin
 
+  mustRestart = 0;
   LoadConfigFromEEPROM();
   Init();// Executée une fois au demarrage et à chaque changement de courbe
 
@@ -386,7 +388,12 @@ void setup()///////////////
 #pragma region LOOP
 void loop()   ////////////////
 ////////////////////////////////////////////////////////////////////////////
-{ while (digitalRead(Cible) == !CaptOn && !SERIALTYPE.available()); //Attendre front actif de la cible OU entrée série
+{
+  while (digitalRead(Cible) == !CaptOn) //Attendre front actif de la cible OU entrée série
+    {
+        if (SERIALTYPE.available()) goto serialConfig;
+    }
+
   T = micros() - prec_H;    //front actif, arrivé calculer T
   prec_H = micros(); //heure du front actuel qui deviendra le front precedent
   if ( Mot_OFF == 1 ) { //Demarrage:premier front de capteur
@@ -402,8 +409,13 @@ void loop()   ////////////////
   }
   //      Serial.println(NTa / T, 1);
   //      SetFlashOff(); // <-- FLASH OFF
-  while (digitalRead(Cible) == CaptOn && !SERIALTYPE.available()); //Attendre si la cible encore active
+  while (digitalRead(Cible) == CaptOn) //Attendre si la cible encore active
+    {
+        if (SERIALTYPE.available()) goto serialConfig;
+    }
 
+
+  serialConfig:
   //  Durant le cycle, vérifier si on a une input en Serial
   if (SERIALTYPE.available()){
 
@@ -417,13 +429,14 @@ void loop()   ////////////////
       Mode_Config = 1;
 
     } else if(readString.startsWith("courbe ")){
+
+      mustRestart = 0;
+      
       char c = readString.charAt(7);
            if (c == 'A' || c == 'a') ModifierCourbeEEPROM(1,'A');
       else if (c == 'B' || c == 'b') ModifierCourbeEEPROM(2,'B');
       else if (c == 'C' || c == 'c') ModifierCourbeEEPROM(3,'C');
       else {SERIALTYPE.print("Courbe non reconnue"); SERIALTYPE.print('\n');}
-    } else {
-      SERIALTYPE.println("commande inconnue.");
     }
   }
 
@@ -458,7 +471,7 @@ void loop()   ////////////////
             SERIALTYPE.flush();
             //software_Reboot();
             Mode_Config = 0;
-            software_Reset();
+            mustRestart = 1;
           } else {
             SERIALTYPE.print("Entrée non valide, saisir un angle entre 45 et 300"); SERIALTYPE.print('\n');
           }
@@ -476,6 +489,10 @@ void loop()   ////////////////
       break;
     }
   }
+  
+  SERIALTYPE.flush();
+  if (mustRestart) software_Reset();
+  
 }
 #pragma endregion
 #pragma region exemple de capteur
@@ -519,9 +536,8 @@ void software_Reset()  //jamais testé
 void ModifierCourbeEEPROM(byte courbe, char car){
   EEPROM.update(addr_courbe_selection, courbe);
   SERIALTYPE.print("Courbe mise à jour, recalcul des paramètres d'avance"); SERIALTYPE.print('\n');
-  courbe_selection = car;
-  Select_Courbe();
-  Mode_Config = 0;
+  SERIALTYPE.flush();
+  mustRestart = 1;
 }
 
 void LoadConfigFromEEPROM(){
