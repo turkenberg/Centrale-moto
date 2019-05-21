@@ -15,14 +15,14 @@ char ver[] = "Version du 25_04_19";
 //**************  Seulement  6 lignes à renseigner obligatoirement.****************
 //**********Ce sont:  Na  Anga  Ncyl  AngleCapteur  CaptOn  Dwell******************
 //*******//*********Courbe   A
-int Na[] =      {0 ,500    ,2000  ,5400  ,10000  ,0};//t/*mn vilo
-int Anga[] =    {0 ,10     ,10    ,17    ,17     ,0};
+int Na[] =      {0 ,500     ,2000   ,5400  ,10000  ,0};//t/*mn vilo
+int Anga[] =    {0 ,10      ,10     ,17    ,17     ,0};
 //*******//*********Courbe   B
-int Nb[] =      {0 ,500    ,2000  ,5400  ,10000  ,0};   //Connecter D8 à la masse
-int Angb[] =    {0 ,2      ,2     ,17    ,24     ,0};
+int Nb[] =      {0 ,500     ,2000   ,5400  ,10000  ,0};   //Connecter D8 à la masse
+int Angb[] =    {0 ,10      ,10     ,17    ,24     ,0};
 //*******//*********Courbe   C
-int Nc[] =      {0 ,500    ,2000  ,7200    ,0};    //Connecter D9 à la masse
-int Angc[] =    {0 ,10     ,10    ,10      ,0};
+int Nc[] =      {0 ,500     ,2000   ,5400  ,10000  ,0};    //Connecter D9 à la masse
+int Angc[] =    {0 ,10      ,10     ,17    ,30     ,0};
 //**********************************************************************************
 int Ncyl = 1;           //Nombre de cylindres, moteur 4 temps.Multiplier par 2 pour moteur 2 temps
 int AngleCapteur = 99; //Position en degrès avant le PMH du capteur(Hall ou autre ).
