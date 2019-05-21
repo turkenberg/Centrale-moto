@@ -1,0 +1,17 @@
+// CONNECT the chip to HC-05:
+sudo rfcomm connect hci0 00:14:03:05:08:F4
+// --> "Connected /dev/rfcomm0 to 00:14:03:05:08:F4" on channel 1
+
+//*New tab*
+// add serial port service
+sdptool add sp
+
+// listen to previously created port
+rfcomm listen 00:14:03:05:08:F4 1
+
+//*New tab*
+// SEND FROM CHIP
+echo "text" > /dev/rfcomm0
+
+// LISTEN FROM CHIP
+cat /dev/refcomm0

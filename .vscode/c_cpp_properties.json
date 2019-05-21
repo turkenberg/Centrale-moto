@@ -5,7 +5,6 @@
             "includePath": [
                 "/Applications/Arduino.app/Contents/Java/tools/**",
                 "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/**",
-                "${workspace}/libraries",
                 "${workspaceFolder}/libraries/ClickButton-master",
                 "${workspaceFolder}/libraries/NeoPixelBus-master",
                 "${workspaceFolder}/libraries/NeoPixelBus-master/src",
@@ -14,7 +13,6 @@
             ],
             "forcedInclude": [
                 "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/Arduino.h",
-                "${workspaceFolder}/libraries/**"
             ],
             "macFrameworkPath": [
                 "/System/Library/Frameworks",

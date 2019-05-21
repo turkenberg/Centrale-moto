@@ -1,6 +1,8 @@
 {
-    "board": "arduino:avr:uno",
-    "sketch": "Centrale-moto/Centrale-moto.ino",
-    "_sketch": "Allumage-electronique/Allumage-electronique.ino",
-    "port": "/dev/cu.usbmodem1411"
+    "board": "arduino:avr:nano",
+    "_sketch": "Centrale-moto/Centrale-moto.ino",
+    "sketch": "Allumage-electronique/Allumage-electronique.ino",
+    "port": "/dev/cu.wchusbserial1410",
+    "configuration": "cpu=atmega328old",
+    "programmer": "AVRISP mkII"
 }
