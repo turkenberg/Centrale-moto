@@ -31,7 +31,3 @@
 *.out
 *.app
 *.ipch
-*.ipch
-*.ipch
-.vscode/arduino.json
-.vscode/arduino.json
