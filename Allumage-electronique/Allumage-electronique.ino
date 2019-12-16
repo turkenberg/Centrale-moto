@@ -25,7 +25,7 @@ int Nc[] =      {0 ,500     ,2000   ,5400  ,10000  ,0};    //Connecter D9 à la 
 int Angc[] =    {0 ,10      ,10     ,17    ,30     ,0};
 //**********************************************************************************
 int Ncyl = 1;           //Nombre de cylindres, moteur 4 temps.Multiplier par 2 pour moteur 2 temps
-int AngleCapteur = 99; //Position en degrès avant le PMH du capteur(Hall ou autre ).
+int AngleCapteur = 108; //Position en degrès avant le PMH du capteur(Hall ou autre ).
 const int CaptOn = 0;  //CapteurOn = 1 déclenchement sur front montant (par ex. capteur Hall "saturé")
 //CapteurOn = 0 déclenchement sur front descendant (par ex. capteur Hall "non saturé").Voir fin du listing
 const int Dwell = 3;
